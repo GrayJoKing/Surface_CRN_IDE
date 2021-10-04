@@ -1,0 +1,23 @@
+{
+  "name": "surface_crn",
+  "version": "1.0.0",
+  "description": "A pure Surface CRN simulator",
+  "main": "Surface_CRN.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GrayJoKing/Surface_CRN_IDE.git"
+  },
+  "keywords": [
+    "surface_crn",
+    "chemical_networks"
+  ],
+  "author": "Joshua King",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/GrayJoKing/Surface_CRN_IDE/issues"
+  },
+  "homepage": "https://github.com/GrayJoKing/Surface_CRN_IDE#readme"
+}
