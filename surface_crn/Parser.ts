@@ -1,5 +1,5 @@
 
-import Species from './Species';
+import Species_Matcher from './Species_Matcher';
 import Transition_Rule from './Transition_Rule';
 import Colour from './Colour';
 import Surface_CRN from './Surface_CRN';
@@ -11,7 +11,7 @@ function parse_rule(line:string): Transition_Rule|false {
 	let rate = 1;
 	line = line.replace(/\((\d+)\)/, (_,x)=>{rate = +x; return ''});
 
-	let [start, end] = line.split('->').map(a=>a.split('+').map(b=>new Species({matcher: b.trim()})));
+	let [start, end] = line.split('->').map(a=>a.split('+').map(b=>new Species_Matcher(b.trim())));		// Note change how transition rules are formed
 
 	//TODO: add more conditions (and error messages?)
 	if (start.length != end.length || start.length > 2 || start.length == 0) return false;
@@ -28,11 +28,11 @@ function parse_option(line:string):string[]|false {
 
 function parse_colour(line:string):[string, Colour]|false {
 
-	let vars:RegExpMatchArray|null = line.match(/^(?:\{([^}]+)\})? *((?: *[^,: ]+,? *)+) *: *\((\d+) *, *(\d+) *, *(\d+)\)$/);
+	let vars : RegExpMatchArray|null = line.match(/^(?:\{([^}]+)\})? *((?: *[^,: ]+,? *)+) *: *\((\d+) *, *(\d+) *, *(\d+)\)$/);
 	
 	if (vars == null) return false;
 	
-	var sp:Species[] = vars[2].split(/,\s*|\s+/).map(a => new Species({matcher: a.trim()}))
+	var sp : Species_Matcher[] = vars[2].split(/,\s*|\s+/).map(a => new Species_Matcher(a.trim()))
 	
 	return [vars[1], new Colour({ name: vars[1], species: sp, red: +vars[3], green: +vars[4], blue: +vars[5]})];
 }
@@ -61,8 +61,9 @@ function parse_line(line:string, program:Surface_CRN): boolean {
 	return false;
 }
 
-function parse_init_state(line:string):Species[] {
-	return line.split(/\s+|,/).map(a => new Species({matcher: a}));
+function parse_init_state(line : string) : string[] {
+	// TODO: add more error checking
+	return line.split(/\s+|,/);
 }
 
 
@@ -86,8 +87,8 @@ export function parse_code(data:string[]):Surface_CRN {
 				init_state_section = false;
 				continue;
 			}
-			let val:Species[] = parse_init_state(line);
-			program.initial_state.push(val);
+			let val : string[] = parse_init_state(line);
+			program.current_state.push(val);
 		}
 	}
 	
@@ -127,7 +128,7 @@ export async function parse_import_files(input_files: File[]):Promise<Surface_CR
 	
 	let lines:string[] = [];
 	
-	for (let [key, m] of manifest_maps) {
+	for (let [_, m] of manifest_maps) {
 		if (!m.imported) lines.push(...m.data);
 	}
 	

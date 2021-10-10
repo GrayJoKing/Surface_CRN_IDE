@@ -6,6 +6,7 @@ class Colour {
         this.green = 0;
         this.blue = 0;
         this.species = [];
+        this.name = "";
         Object.assign(this, init);
     }
     rgb() {
@@ -13,3 +14,4 @@ class Colour {
     }
 }
 exports.default = Colour;
+Colour.white = new Colour({ red: 256, green: 256, blue: 256 });

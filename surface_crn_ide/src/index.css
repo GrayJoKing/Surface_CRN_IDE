@@ -39,6 +39,7 @@ header {
 	top: 0;
 	grid-column: 1 / span 6;
 	grid-row: 1;
+	z-index: 10;
 }
 
 nav {
@@ -63,6 +64,8 @@ nav {
 	grid-column: 1 / span 5;
 	background: darkslategrey;
 	min-height: 30rem;
+	display: flex;
+	flex-direction: column;
 }
 
 .rules_panel {
@@ -104,4 +107,10 @@ nav {
 
 #colour_list > tr > td > input {
 	max-width: 80px;
+}
+
+.react-canvas-grid {
+	flex: 1 1 auto;
+	padding: 5px;
+	box-sizing: border-box;
 }

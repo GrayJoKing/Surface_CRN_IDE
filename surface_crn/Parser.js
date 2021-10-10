@@ -13,7 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.parse_import_files = exports.parse_code = void 0;
-const Species_1 = __importDefault(require("./Species"));
+const Species_Matcher_1 = __importDefault(require("./Species_Matcher"));
 const Transition_Rule_1 = __importDefault(require("./Transition_Rule"));
 const Colour_1 = __importDefault(require("./Colour"));
 const Surface_CRN_1 = __importDefault(require("./Surface_CRN"));
@@ -22,7 +22,7 @@ function parse_rule(line) {
         return false;
     let rate = 1;
     line = line.replace(/\((\d+)\)/, (_, x) => { rate = +x; return ''; });
-    let [start, end] = line.split('->').map(a => a.split('+').map(b => new Species_1.default({ matcher: b.trim() })));
+    let [start, end] = line.split('->').map(a => a.split('+').map(b => new Species_Matcher_1.default(b.trim()))); // Note change how transition rules are formed
     //TODO: add more conditions (and error messages?)
     if (start.length != end.length || start.length > 2 || start.length == 0)
         return false;
@@ -37,8 +37,8 @@ function parse_colour(line) {
     let vars = line.match(/^(?:\{([^}]+)\})? *((?: *[^,: ]+,? *)+) *: *\((\d+) *, *(\d+) *, *(\d+)\)$/);
     if (vars == null)
         return false;
-    var sp = vars[2].split(/,\s*|\s+/).map(a => new Species_1.default({ matcher: a.trim() }));
-    return [vars[1], new Colour_1.default({ species: sp, red: +vars[3], green: +vars[4], blue: +vars[5] })];
+    var sp = vars[2].split(/,\s*|\s+/).map(a => new Species_Matcher_1.default(a.trim()));
+    return [vars[1], new Colour_1.default({ name: vars[1], species: sp, red: +vars[3], green: +vars[4], blue: +vars[5] })];
 }
 function parse_line(line, program) {
     var rule = parse_rule(line);
@@ -60,7 +60,8 @@ function parse_line(line, program) {
     return false;
 }
 function parse_init_state(line) {
-    return line.split(/\s+|,/).map(a => new Species_1.default({ matcher: a }));
+    // TODO: add more error checking
+    return line.split(/\s+|,/);
 }
 function parse_code(data) {
     let init_state_section = false;
@@ -82,7 +83,7 @@ function parse_code(data) {
                 continue;
             }
             let val = parse_init_state(line);
-            program.initial_state.push(val);
+            program.current_state.push(val);
         }
     }
     return program;
@@ -118,7 +119,7 @@ function parse_import_files(input_files) {
             }
         }
         let lines = [];
-        for (let [key, m] of manifest_maps) {
+        for (let [_, m] of manifest_maps) {
             if (!m.imported)
                 lines.push(...m.data);
         }
