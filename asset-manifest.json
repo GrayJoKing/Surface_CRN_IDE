@@ -1,20 +1,20 @@
 {
   "files": {
-    "main.css": "/Surface_CRN_IDE/static/css/main.d6a6056f.chunk.css",
-    "main.js": "/Surface_CRN_IDE/static/js/main.9dc6f580.chunk.js",
-    "main.js.map": "/Surface_CRN_IDE/static/js/main.9dc6f580.chunk.js.map",
+    "main.css": "/Surface_CRN_IDE/static/css/main.31459c02.chunk.css",
+    "main.js": "/Surface_CRN_IDE/static/js/main.04a3956a.chunk.js",
+    "main.js.map": "/Surface_CRN_IDE/static/js/main.04a3956a.chunk.js.map",
     "runtime-main.js": "/Surface_CRN_IDE/static/js/runtime-main.aac5a0d9.js",
     "runtime-main.js.map": "/Surface_CRN_IDE/static/js/runtime-main.aac5a0d9.js.map",
-    "static/js/2.be014a9b.chunk.js": "/Surface_CRN_IDE/static/js/2.be014a9b.chunk.js",
-    "static/js/2.be014a9b.chunk.js.map": "/Surface_CRN_IDE/static/js/2.be014a9b.chunk.js.map",
+    "static/js/2.8d08eb5f.chunk.js": "/Surface_CRN_IDE/static/js/2.8d08eb5f.chunk.js",
+    "static/js/2.8d08eb5f.chunk.js.map": "/Surface_CRN_IDE/static/js/2.8d08eb5f.chunk.js.map",
     "index.html": "/Surface_CRN_IDE/index.html",
-    "static/css/main.d6a6056f.chunk.css.map": "/Surface_CRN_IDE/static/css/main.d6a6056f.chunk.css.map",
-    "static/js/2.be014a9b.chunk.js.LICENSE.txt": "/Surface_CRN_IDE/static/js/2.be014a9b.chunk.js.LICENSE.txt"
+    "static/css/main.31459c02.chunk.css.map": "/Surface_CRN_IDE/static/css/main.31459c02.chunk.css.map",
+    "static/js/2.8d08eb5f.chunk.js.LICENSE.txt": "/Surface_CRN_IDE/static/js/2.8d08eb5f.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
     "static/js/runtime-main.aac5a0d9.js",
-    "static/js/2.be014a9b.chunk.js",
-    "static/css/main.d6a6056f.chunk.css",
-    "static/js/main.9dc6f580.chunk.js"
+    "static/js/2.8d08eb5f.chunk.js",
+    "static/css/main.31459c02.chunk.css",
+    "static/js/main.04a3956a.chunk.js"
   ]
 }
