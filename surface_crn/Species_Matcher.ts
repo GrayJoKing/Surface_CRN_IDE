@@ -1,19 +1,10 @@
 
 export default class Species_Matcher {
-	original_string : string;
-	matcher : string;
+	original_string : string = "";
+	matcher : string = "";
 	
 	public constructor(init : string) {
-		this.original_string = init;
-		
-		if (init.match(/\\(\d|\(\d+\))/) !== null) throw Error();
-		// Square brackets must contain only \w (WRONG, can contain same as normal() )
-		//if (init.match(/\[\w+[^\]\w]/) !== null) throw Error();
-		// Todo: handle {}
-		
-		init = init.replace(/\\\((\d+)\)/g, "(?:\\$1)");
-		
-		this.matcher = '^(?:' + init + ')$';
+		this.update_matcher(init)
 	}
 	
 	public includes(s : string) : boolean {
@@ -22,5 +13,21 @@ export default class Species_Matcher {
 	
 	public is_pure() {
 		return this.original_string.match(/^\w+$/) === null;
+	}
+	
+	public toString() {
+		return this.original_string;
+	}
+	
+	public update_matcher(s : string) {
+		this.original_string = s;
+		
+		if (s.match(/\\(\d|\(\d+\))/) !== null) throw Error();
+		
+		// Todo: handle {} []
+		
+		s = s.replace(/\\\((\d+)\)/g, "(?:\\$1)");
+		
+		this.matcher = '^(?:' + s + ')$';
 	}
 }

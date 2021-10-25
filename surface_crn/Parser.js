@@ -21,7 +21,7 @@ function parse_rule(line) {
     if ((line.match(/->/g) || []).length != 1)
         return false;
     let rate = 1;
-    line = line.replace(/\((\d+)\)/, (_, x) => { rate = +x; return ''; });
+    line = line.replace(/\((\d+(?:\.\d+)?)\)/, (_, x) => { rate = +x; return ''; });
     let [start, end] = line.split('->').map(a => a.split('+').map(b => new Species_Matcher_1.default(b.trim()))); // Note change how transition rules are formed
     //TODO: add more conditions (and error messages?)
     if (start.length != end.length || start.length > 2 || start.length == 0)
@@ -34,11 +34,11 @@ function parse_option(line) {
     return line.split('=').map(a => a.trim());
 }
 function parse_colour(line) {
-    let vars = line.match(/^(?:\{([^}]+)\})? *((?: *[^,: ]+,? *)+) *: *\((\d+) *, *(\d+) *, *(\d+)\)$/);
+    let vars = line.match(/^(?:\{([^}]+)\})? *((?: *[^,: ]+,? *?)+) *: *\((\d+) *, *(\d+) *, *(\d+)\)$/);
     if (vars == null)
         return false;
     var sp = vars[2].split(/,\s*|\s+/).map(a => new Species_Matcher_1.default(a.trim()));
-    return [vars[1], new Colour_1.default({ name: vars[1], species: sp, red: +vars[3], green: +vars[4], blue: +vars[5] })];
+    return new Colour_1.default({ name: vars[1], species: new Set(sp), red: +vars[3], green: +vars[4], blue: +vars[5] });
 }
 function parse_line(line, program) {
     var rule = parse_rule(line);
@@ -48,7 +48,7 @@ function parse_line(line, program) {
     }
     var name_colour = parse_colour(line);
     if (name_colour !== false) {
-        program.colour_map.set(...name_colour);
+        program.colour_map.add(name_colour);
         return true;
     }
     var option = parse_option(line);
@@ -83,7 +83,7 @@ function parse_code(data) {
                 continue;
             }
             let val = parse_init_state(line);
-            program.current_state.push(val);
+            program.initial_state.push(val);
         }
     }
     return program;

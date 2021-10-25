@@ -13,8 +13,12 @@
     "@types/react-dom": "^17.0.9",
     "react": "^17.0.2",
     "react-canvas-grid": "^0.13.1",
+    "react-colorful": "^5.5.0",
     "react-dom": "^17.0.2",
+    "react-icons": "^4.3.1",
     "react-scripts": "4.0.3",
+    "react-select": "^5.1.0",
+    "react-tabs": "^3.2.2",
     "surface_crn": "1.0.0",
     "typescript": "^4.4.3",
     "web-vitals": "^1.1.2",
@@ -47,6 +51,7 @@
     ]
   },
   "devDependencies": {
+    "@types/react-tabs": "^2.3.3",
     "gh-pages": "^3.2.3"
   }
 }

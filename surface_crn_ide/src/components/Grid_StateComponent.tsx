@@ -5,43 +5,45 @@ import Point from './PointClass';
 import {ReactCanvasGrid, ColumnDef, DataRow, CellDef, CustomDrawCallbackMetadata, CellDataChangeEvent, cellHasTextFunction} from 'react-canvas-grid';
 
 interface CRN_GridProps {
-	model : Surface_CRN
+	current_state : string[][]
+	colour_map : Colour_Map
+	grid_type : 'square'|'hex'
+	update_state : (x : number, y : number, s : string) => void
 }
 
 interface CRN_GridState extends React.ComponentState {
-	columns : ColumnDef[],
-	data: Array<DataRow<string | null>>,
-	colour_map : Colour_Map,
-	grid_type : 'square'|'hex',
-	offset : Point,
+	columns : ColumnDef[]
+	data: Array<DataRow<string | null>>
+	colour_map : Colour_Map
+	grid_type : 'square'|'hex'
+	offset : Point
 }
 
 class CRN_GridComponent extends React.Component<CRN_GridProps, CRN_GridState> {
 	
 	constructor(props : CRN_GridProps) {
 		super(props);
-		let {model} = props;
+		let {current_state, colour_map, grid_type} = props;
 		this.state = {
-			columns : this.createCols(model.current_state),
-			data : this.createData(model.current_state),
-			colour_map : model.colour_map,
-			grid_type : model.grid_type,
+			columns : this.createCols(current_state),
+			data : this.createData(current_state),
+			colour_map : colour_map,
+			grid_type : grid_type,
 			offset : Point.origin
 		};
 	}
 	
 	render() {
 		console.log('rendAll');
-		// TODO: render "Initial State" over canvas?
-		return <div className="panel state_panel">
-					<h3> Initial State </h3>
-					<ReactCanvasGrid<string | null>
-						columns={this.state.columns}
-						data={this.state.data}
-						rowHeight={20}
-						onCellDataChanged={this.onCellDataChanged}
-					/>
-				</div>
+		// TODO: figure out where to clear the temp
+		//this.state.colour_map.clear_temp();
+		// TODO: render "Initial State" and other information over canvas
+		return <ReactCanvasGrid<string | null>
+					columns={this.state.columns}
+					data={this.state.data}
+					rowHeight={20}
+					onCellDataChanged={this.onCellDataChanged}
+				/>
 	}
 	
 	public updateColsAndData(current_state : string[][]) {
@@ -71,11 +73,13 @@ class CRN_GridComponent extends React.Component<CRN_GridProps, CRN_GridState> {
 						data: current_state[i][j],
 						getText: (x : string|null) => x ? x : '',
 						renderBackground: (context : CanvasRenderingContext2D, cellBounds : ClientRect, cell : CellDef<string | null>, metadata : CustomDrawCallbackMetadata) => {
-							console.log('rend');
 							if (cell.data !== null) {
 								let colour = this.state.colour_map.find_colour(cell.data);
 								if (colour == null) {
-									colour = Colour.white;
+									let s : string = this.state.colour_map.new_colour();
+									colour = new Colour(s);
+									this.state.colour_map.add_temp(cell.data!, colour);
+									console.log(cell.data, colour)
 								}
 								context.fillStyle = 'rgb(' + colour.rgb().join(',') + ')';
 								context.fillRect(cellBounds.left, cellBounds.top, cellBounds.width, cellBounds.height);
@@ -85,21 +89,17 @@ class CRN_GridComponent extends React.Component<CRN_GridProps, CRN_GridState> {
 							const text = cellHasTextFunction(cell) ? cell.getText(cell.data) : cell.text;
 							
 							if (text) {
-								let colour = this.state.colour_map.find_colour(cell.data!);
+								let colour : Colour | null = this.state.colour_map.find_colour(cell.data!);
 								if (colour == null) {
-									colour = Colour.white;
+									let s : string = this.state.colour_map.new_colour();
+									colour = new Colour(s);
+									this.state.colour_map.add_temp(cell.data!, colour);
+									console.log(cell.data, colour)
 								}
 								let [r,g,b] = colour.rgb();
 								context.fillStyle = (r * 0.299 + g * 0.587 + b * 0.114) > 186 ? 'black' : 'white';
 								context.fillText(text,cellBounds.left + 2,cellBounds.top + 10, cellBounds.width - 4);
 							}
-							/*
-							context.strokeStyle= "black";
-							context.fillStyle = "white";
-							context.lineWidth = 0.5;
-							context.fillText(text,cellBounds.left + 2,cellBounds.top + 10, cellBounds.width - 4);
-							context.strokeText(text,cellBounds.left + 2,cellBounds.top + 10, cellBounds.width - 4);
-							*/
 						},
 						editor: {
 							serialise: (x : string|null) => x ? x : '',
@@ -129,21 +129,7 @@ class CRN_GridComponent extends React.Component<CRN_GridProps, CRN_GridState> {
 	}
 	
 	private onCellDataChanged = (event: CellDataChangeEvent<string | null>) => {
-		this.setState({
-			data: this.state.data.map((row, i) => {
-				if (i === event.rowIndex) {
-					return {
-						...row,
-						[event.fieldName]: {
-							...row[event.fieldName],
-							data: event.newData,
-						},
-					};
-				} else {
-					return row;
-				}
-			}),
-		});
+		this.props.update_state(event.rowIndex-1, event.colIndex-1, event.newData!);
 	}
 }
 

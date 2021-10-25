@@ -9,7 +9,7 @@ function parse_rule(line:string): Transition_Rule|false {
 	if ((line.match(/->/g)||[]).length != 1) return false;
 	
 	let rate = 1;
-	line = line.replace(/\((\d+)\)/, (_,x)=>{rate = +x; return ''});
+	line = line.replace(/\((\d+(?:\.\d+)?)\)/, (_,x)=>{rate = +x; return ''});
 
 	let [start, end] = line.split('->').map(a=>a.split('+').map(b=>new Species_Matcher(b.trim())));		// Note change how transition rules are formed
 
@@ -26,15 +26,15 @@ function parse_option(line:string):string[]|false {
 	return line.split('=').map(a=>a.trim());
 }
 
-function parse_colour(line:string):[string, Colour]|false {
+function parse_colour(line : string) : Colour | false {
 
-	let vars : RegExpMatchArray|null = line.match(/^(?:\{([^}]+)\})? *((?: *[^,: ]+,? *)+) *: *\((\d+) *, *(\d+) *, *(\d+)\)$/);
+	let vars : RegExpMatchArray|null = line.match(/^(?:\{([^}]+)\})? *((?: *[^,: ]+,? *?)+) *: *\((\d+) *, *(\d+) *, *(\d+)\)$/);
 	
 	if (vars == null) return false;
 	
 	var sp : Species_Matcher[] = vars[2].split(/,\s*|\s+/).map(a => new Species_Matcher(a.trim()))
 	
-	return [vars[1], new Colour({ name: vars[1], species: sp, red: +vars[3], green: +vars[4], blue: +vars[5]})];
+	return new Colour({name: vars[1], species: new Set<Species_Matcher>(sp), red: +vars[3], green: +vars[4], blue: +vars[5]});
 }
 
 function parse_line(line:string, program:Surface_CRN): boolean {
@@ -47,7 +47,7 @@ function parse_line(line:string, program:Surface_CRN): boolean {
 	
 	var name_colour = parse_colour(line);
 	if (name_colour !== false) {
-		program.colour_map.set(...name_colour);
+		program.colour_map.add(name_colour);
 		return true;
 	}
 	
@@ -67,7 +67,7 @@ function parse_init_state(line : string) : string[] {
 }
 
 
-export function parse_code(data:string[]):Surface_CRN {
+export function parse_code(data:string[]) : Surface_CRN {
 	let init_state_section:boolean = false;
 
 	let program = new Surface_CRN();
@@ -88,7 +88,7 @@ export function parse_code(data:string[]):Surface_CRN {
 				continue;
 			}
 			let val : string[] = parse_init_state(line);
-			program.current_state.push(val);
+			program.initial_state.push(val);
 		}
 	}
 	

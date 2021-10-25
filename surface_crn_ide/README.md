@@ -2,6 +2,14 @@
 
 This is the (unfinished) IDE for Surface CRNs.
 
+# ToDo:
+* Redo the state editor entirely to remove dependency on react-editable-canvas (and make more efficient)
+* Add support for hex and triangular grids
+* Make it pretty
+* Add simulator options
+* Simulator information (time of sim, etc.)
+* Selectable example programs
+
 ## Available Scripts
 
 In the project directory, you can run:

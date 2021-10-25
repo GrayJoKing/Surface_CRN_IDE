@@ -19,5 +19,10 @@
   "bugs": {
     "url": "https://github.com/GrayJoKing/Surface_CRN_IDE/issues"
   },
-  "homepage": "https://github.com/GrayJoKing/Surface_CRN_IDE#readme"
+  "homepage": "https://github.com/GrayJoKing/Surface_CRN_IDE#readme",
+  "dependencies": {
+    "random": "^3.0.6",
+    "seedrandom": "^3.0.5",
+    "ts-priority-queue": "^0.1.1"
+  }
 }
