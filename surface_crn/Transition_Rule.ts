@@ -2,10 +2,12 @@
 import Species_Matcher from './Species_Matcher';
 
 export default class Transition_Rule {
-	is_mono:boolean = true;
-	reactants:Species_Matcher[] = [];
-	products:Species_Matcher[] = [];
-	rate:number = 1;
+	is_mono : boolean = true;
+	reactants : Species_Matcher[] = [];
+	products : Species_Matcher[] = [];
+	
+	decomposed : [string, string, string, string][] = [];
+	rate : number = 1;
 	public constructor(init : Partial<Transition_Rule>) {
 		this.update(init);
 	}
@@ -25,7 +27,7 @@ export default class Transition_Rule {
 	}
 	
 	public matches(x : string, y ?: string) : false | string[] {
-		if (this.is_mono == (y !== undefined)) return false;
+		if (this.is_mono === (y !== undefined)) return false;
 		
 		if (this.is_mono) {
 			if (this.reactants[0].includes(x)) {

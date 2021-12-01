@@ -14,7 +14,7 @@ interface Surface_CRN_State {
 	rules : Transition_Rule[]
 	colour_map : Colour_Map
 	options : Map<string, string>
-	grid_type : 'square'|'hex'
+	geometry : 'square'|'hex'
 }
 
 export default class Surface_CRN {
@@ -22,8 +22,11 @@ export default class Surface_CRN {
 	rules : Transition_Rule[] = [];
 	colour_map : Colour_Map = new Colour_Map();
 	options : Map<string, string> = new Map();
-	grid_type : 'square'|'hex' = 'square';
-	random_seed : number | null = null;
+	geometry : 'square'|'hex' = 'square';
+	rng_seed : number | null = null;
+	pixels_per_node : number = 20;
+	speedup_factor : number = 0.5;
+	fps : number = 30;
 	
 	static parser = {parse_import_files, parse_code};
 	
@@ -39,6 +42,36 @@ export default class Surface_CRN {
 		this.rules.push(Transition_Rule.blankRule());
 	}
 	
+	set_option(key : string, value : string) {
+		switch (key) {
+			case "geometry":
+				if (value === "square" || value === "hex") {
+					this.geometry = value;
+				} else {
+					throw "Invalid option: Geometry"
+				}
+				break;
+			case "rng_seed":
+				var i = parseInt(value);
+				this.rng_seed = i;
+				break;
+			case "pixels_per_node":
+				var i = parseInt(value);
+				this.pixels_per_node = i;
+				break;
+			case "speedup_factor":
+				var i = parseInt(value);
+				this.speedup_factor = i;
+				break;
+			case "fps":
+				var i = parseInt(value);
+				this.fps = i;
+				break;
+			default:
+				this.options.set(key, value);
+		}
+	}
+	
 	export() : string {
 		let output = [];
 		
@@ -47,17 +80,17 @@ export default class Surface_CRN {
 		// Transition rules here
 		output.push("!START_TRANSITION_RULES")
 		output.push(...this.rules.map(a => a.toString()));
-		output.push("!END_TRANSITION_RULES")
+		output.push("!END_TRANSITION_RULES\n")
 		
 		// Colour mapping
 		output.push(["!START_COLORMAP"])
 		output.push(...this.colour_map.export());
-		output.push(["!END_COLORMAP"])
+		output.push(["!END_COLORMAP\n"])
 		
 		// Initial State
 		output.push(["!START_INIT_STATE"])
 		output.push(...this.initial_state.map(a => a.join(' ')));
-		output.push(["!END_INIT_STATE"])
+		output.push(["!END_INIT_STATE\n"])
 		
 		return output.join("\n");
 	}
@@ -67,21 +100,32 @@ export default class Surface_CRN {
 	sim_time : number = 0;
 	sim_queue : PriorityQueue<Transition_State> | null = null;
 	sim_history : Transition_State[] = [];
+	rule_check_cache : {[key : string] : Transition_Rule[]} = {};
+	
+	stop_sim() {
+		this.current_state = [];
+		this.last_updated = [];
+		this.sim_time = 0;
+		this.sim_queue = null;
+		this.sim_history = [];
+		this.rule_check_cache = {};
+		this.colour_map.clear_temp();
+	}
 	
 	start_sim() {
-		this.current_state = this.initial_state.map(a => [...a]);
-		if (this.random_seed !== null) random.clone(this.random_seed);
-		this.sim_history = [];
+		this.stop_sim();
+		if (this.rng_seed !== null) random.clone(this.rng_seed);
+		this.sim_queue = new PriorityQueue<Transition_State>({comparator : (a,b) => a.execution_time-b.execution_time});
 		
 		let initial_changes : Transition_State[] = [];
-		let ignore : [number,number][] = [];
 		this.initial_state.forEach((s : string[], y : number) => {
 			this.last_updated.push(Array(s.length).fill(0));
+			this.current_state.push([]);
 			s.forEach((_, x : number) => {
-				let r = this.find_next_transition(x,y, ignore);
-				if (r) {
-					initial_changes.push(r);
-					ignore.push([x,y]);
+				this.current_state[this.current_state.length-1].push(this.initial_state[y][x]);
+				let r = this.find_next_transitions(x,y);
+				for (let t of r) {
+					initial_changes.push(t);
 				}
 			})
 		})
@@ -116,6 +160,23 @@ export default class Surface_CRN {
 		return true;
 	}
 	
+	run_backto(time : number) : boolean {
+		while (this.sim_time > time) {
+			let t = this.step_backward();
+			if (t === false) return false;
+		}
+		this.sim_time = time;
+		return true;
+	}
+	
+	next_frame() : boolean {
+		return this.run_upto(this.sim_time + this.speedup_factor*1/this.fps);
+	}
+	
+	prev_frame() : boolean {
+		return this.run_backto(this.sim_time - this.speedup_factor*1/this.fps);
+	}
+	
 	step_forward() : boolean {
 		if (this.sim_started()) {
 			let t = this.get_next_transition();
@@ -129,14 +190,14 @@ export default class Surface_CRN {
 			});
 			if (t.new_transitions === null) {
 				t.new_transitions = [];
-				let ignore : [number,number][] = [];
+				let ignore : Set<[number,number]> = new Set<[number, number]>();
 				t.new_cells.forEach(([x,y,_]) => {
-					let newT = this.find_next_transition(x,y, ignore);
-					if (newT !== null) {
-						this.sim_queue!.queue(newT);
-						t && t.new_transitions!.push(newT);
-						ignore.push([x,y]);
+					let newT = this.find_next_transitions(x,y, ignore);
+					for (var tr of newT) {
+						this.sim_queue!.queue(tr);
+						t && t.new_transitions!.push(tr);
 					}
+					ignore.add([x,y]);
 				});
 			} else {
 				t.new_transitions.forEach((newT) => {
@@ -144,6 +205,7 @@ export default class Surface_CRN {
 				});
 			}
 			this.sim_history.push(t);
+			//console.log(...t.old_cells, '=>', ...t.new_cells);
 			return this.sim_queue!.length != 0;
 		} else {
 			return false;
@@ -168,59 +230,93 @@ export default class Surface_CRN {
 		return false;
 	}
 	
-	find_next_transition(x : number, y : number, ignore : [number, number][] = []) : Transition_State | null {
+	find_next_transitions(x : number, y : number, ignore : Set<[number, number]> = new Set()) : Transition_State[] {
 		let current_cell = this.current_state[y][x];
-		let best_transition : Transition_State | null = null;
-		for (let rule of this.rules) {
+		let possible_transitions : Transition_State[] = [];
+		let rs = [];
+		
+		let z = this.rule_check_cache[current_cell];
+		if (z === undefined) {
+			/*
+			for (let rule of this.rules) {
+				if (rule.is_mono && rule.matches(current_cell)) {
+					rs.push(rule);
+				} else if (!rule.is_mono && rule.m) {
+					
+				}
+			}
+			this.rule_check_cache[current_cell] = rs;
+			*/
+			rs = this.rules;
+		} else {
+			rs = z;
+		}
+		
+		
+		for (let rule of rs) {
 			if (rule.is_mono) {
 				let r = rule.matches(current_cell)
 				if (r) {
 					let t = this.sim_time + Math.log(1 / random.float()) / rule.rate;
-					if (best_transition !== null && best_transition.execution_time > t) continue;
-					best_transition = new Transition_State(this.sim_time, t);
-					best_transition.add_old_cell(x, y, current_cell);
-					best_transition.add_new_cell(x, y, r[0]);
+					// if (best_mono_transition !== null && best_mono_transition.execution_time > t) continue;
+					let tr = new Transition_State(this.sim_time, t);
+					tr.add_old_cell(x, y, current_cell);
+					tr.add_new_cell(x, y, r[0]);
+					possible_transitions.push(tr);
 				}
 			} else {
 				let neighbour_offsets : [number, number][] = [];
-				if (this.grid_type == 'square') {
+				if (this.geometry == 'square') {
 					neighbour_offsets = [[-1,0], [0,-1], [1,0], [0,1]]
 				} else {
 					//TODO: hex offsets
 				}
 				for (let [xd,yd] of neighbour_offsets) {
 					if (y+yd >= 0 && y+yd < this.current_state.length && x+xd >= 0 && x+xd < this.current_state[y+yd].length) {
-						if (ignore.some(([xi,yi]) => xi == x+xd && yi == y+yd)) continue;
+						if (ignore.has([x+xd, y+yd])) continue;
 						let other_cell = this.current_state[y+yd][x+xd];
 						let r = rule.matches(current_cell, other_cell);
 						if (r) {
 							let t = this.sim_time + Math.log(1 / random.float()) / rule.rate;
-							if (best_transition && best_transition.execution_time > t) continue;
-							best_transition = new Transition_State(this.sim_time, t);
-							best_transition.add_old_cell(x, y, current_cell);
-							best_transition.add_old_cell(x+xd, y+yd, other_cell);
-							best_transition.add_new_cell(x, y, r[0]);
-							best_transition.add_new_cell(x+xd, y+yd, r[1]);
+							//if (best_transition && best_transition.execution_time > t) continue;
+							let tr = new Transition_State(this.sim_time, t);
+							tr.add_old_cell(x, y, current_cell);
+							tr.add_old_cell(x+xd, y+yd, other_cell);
+							tr.add_new_cell(x, y, r[0]);
+							tr.add_new_cell(x+xd, y+yd, r[1]);
+							possible_transitions.push(tr);
 						}
 						r = rule.matches(other_cell, current_cell);
 						if (r) {
 							let t = this.sim_time + Math.log(1 / random.float()) / rule.rate;
-							if (best_transition && best_transition.execution_time > t) continue;
-							best_transition = new Transition_State(this.sim_time, t);
-							best_transition.add_old_cell(x, y, current_cell);
-							best_transition.add_old_cell(x+xd, y+yd, other_cell);
-							best_transition.add_new_cell(x, y, r[1]);
-							best_transition.add_new_cell(x+xd, y+yd, r[0]);
+							//if (best_transition && best_transition.execution_time > t) continue;
+							let tr = new Transition_State(this.sim_time, t);
+							tr.add_old_cell(x, y, current_cell);
+							tr.add_old_cell(x+xd, y+yd, other_cell);
+							tr.add_new_cell(x, y, r[1]);
+							tr.add_new_cell(x+xd, y+yd, r[0]);
+							possible_transitions.push(tr);
 						}
 					}
 				}
 			}
 		}
-		return best_transition;
+		return possible_transitions;
 	}
 	
 	sim_started() : boolean {
-		return this.sim_queue != null;
+		return this.sim_queue !== null;
+	}
+	
+	increase_size() {
+		this.pixels_per_node += 1;
+	}
+	decrease_size() {
+		if (this.pixels_per_node <= 1) {
+			this.pixels_per_node -= 0.1;
+		} else {
+			this.pixels_per_node -= 1;
+		}
 	}
 }
 

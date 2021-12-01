@@ -9,6 +9,7 @@ class Transition_Rule {
         this.is_mono = true;
         this.reactants = [];
         this.products = [];
+        this.decomposed = [];
         this.rate = 1;
         this.update(init);
     }
@@ -24,7 +25,7 @@ class Transition_Rule {
         return new Transition_Rule({ is_mono: true, reactants: [new Species_Matcher_1.default('')], products: [new Species_Matcher_1.default('')] });
     }
     matches(x, y) {
-        if (this.is_mono == (y !== undefined))
+        if (this.is_mono === (y !== undefined))
             return false;
         if (this.is_mono) {
             if (this.reactants[0].includes(x)) {

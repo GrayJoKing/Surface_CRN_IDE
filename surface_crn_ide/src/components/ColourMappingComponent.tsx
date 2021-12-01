@@ -111,7 +111,7 @@ class ColourRowComponent extends React.Component<ColourRowProps,ColourRowState> 
 	
 	updateSpecies(a : Species_Matcher) {
 		return (e : React.ChangeEvent<HTMLInputElement>) => {
-			a.update_matcher(e.target.value);
+			a.update_matched(e.target.value);
 			this.setState({species : this.props.colour.species});
 			this.props.onChange();
 		}

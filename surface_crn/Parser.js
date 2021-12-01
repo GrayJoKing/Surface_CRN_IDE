@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -21,7 +12,7 @@ function parse_rule(line) {
     if ((line.match(/->/g) || []).length != 1)
         return false;
     let rate = 1;
-    line = line.replace(/\((\d+(?:\.\d+)?)\)/, (_, x) => { rate = +x; return ''; });
+    line = line.replace(/\((\d*(?:\.\d+)?)\)/, (_, x) => { rate = +x; return ''; });
     let [start, end] = line.split('->').map(a => a.split('+').map(b => new Species_Matcher_1.default(b.trim()))); // Note change how transition rules are formed
     //TODO: add more conditions (and error messages?)
     if (start.length != end.length || start.length > 2 || start.length == 0)
@@ -38,7 +29,7 @@ function parse_colour(line) {
     if (vars == null)
         return false;
     var sp = vars[2].split(/,\s*|\s+/).map(a => new Species_Matcher_1.default(a.trim()));
-    return new Colour_1.default({ name: vars[1], species: new Set(sp), red: +vars[3], green: +vars[4], blue: +vars[5] });
+    return new Colour_1.default({ name: vars[1] || vars[2], species: new Set(sp), red: +vars[3], green: +vars[4], blue: +vars[5] });
 }
 function parse_line(line, program) {
     var rule = parse_rule(line);
@@ -53,8 +44,8 @@ function parse_line(line, program) {
     }
     var option = parse_option(line);
     if (option !== false) {
-        let [val, key] = option;
-        program.options.set(val, key);
+        let [key, val] = option;
+        program.set_option(key, val);
         return true;
     }
     return false;
@@ -91,39 +82,37 @@ function parse_code(data) {
 exports.parse_code = parse_code;
 // Import project as a list of files
 // TODO: change false to list of warnings
-function parse_import_files(input_files) {
-    return __awaiter(this, void 0, void 0, function* () {
-        if (!input_files) {
-            //show error
-            console.log("No input files");
-            return false;
+async function parse_import_files(input_files) {
+    if (!input_files) {
+        //show error
+        console.log("No input files");
+        return false;
+    }
+    class Manifest_File {
+        constructor() {
+            this.data = [];
+            this.imported = false;
         }
-        class Manifest_File {
-            constructor() {
-                this.data = [];
-                this.imported = false;
+    }
+    let manifest_maps = new Map();
+    ;
+    for (let file of input_files) {
+        var m = new Manifest_File();
+        m.data = (await file.text()).split("\n").map(a => a.trim().replace(/#.*/, ''));
+        manifest_maps.set(file.name, m);
+    }
+    for (let [key, m] of manifest_maps) {
+        for (let s of m.data) {
+            if (s.match(/^!INCLUDE /)) {
+                //TODO: replace includes
             }
         }
-        let manifest_maps = new Map();
-        ;
-        for (let file of input_files) {
-            var m = new Manifest_File();
-            m.data = (yield file.text()).split("\n").map(a => a.trim().replace(/#.*/, ''));
-            manifest_maps.set(file.name, m);
-        }
-        for (let [key, m] of manifest_maps) {
-            for (let s of m.data) {
-                if (s.match(/^!INCLUDE /)) {
-                    //TODO: replace includes
-                }
-            }
-        }
-        let lines = [];
-        for (let [_, m] of manifest_maps) {
-            if (!m.imported)
-                lines.push(...m.data);
-        }
-        return parse_code(lines);
-    });
+    }
+    let lines = [];
+    for (let [_, m] of manifest_maps) {
+        if (!m.imported)
+            lines.push(...m.data);
+    }
+    return parse_code(lines);
 }
 exports.parse_import_files = parse_import_files;

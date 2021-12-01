@@ -9,7 +9,7 @@ function parse_rule(line:string): Transition_Rule|false {
 	if ((line.match(/->/g)||[]).length != 1) return false;
 	
 	let rate = 1;
-	line = line.replace(/\((\d+(?:\.\d+)?)\)/, (_,x)=>{rate = +x; return ''});
+	line = line.replace(/\((\d*(?:\.\d+)?)\)/, (_,x)=>{rate = +x; return ''});
 
 	let [start, end] = line.split('->').map(a=>a.split('+').map(b=>new Species_Matcher(b.trim())));		// Note change how transition rules are formed
 
@@ -34,7 +34,7 @@ function parse_colour(line : string) : Colour | false {
 	
 	var sp : Species_Matcher[] = vars[2].split(/,\s*|\s+/).map(a => new Species_Matcher(a.trim()))
 	
-	return new Colour({name: vars[1], species: new Set<Species_Matcher>(sp), red: +vars[3], green: +vars[4], blue: +vars[5]});
+	return new Colour({name: vars[1]||vars[2], species: new Set<Species_Matcher>(sp), red: +vars[3], green: +vars[4], blue: +vars[5]});
 }
 
 function parse_line(line:string, program:Surface_CRN): boolean {
@@ -53,8 +53,8 @@ function parse_line(line:string, program:Surface_CRN): boolean {
 	
 	var option = parse_option(line);
 	if (option !== false) {
-		let [val,key] = option;
-		program.options.set(val, key);
+		let [key,val] = option;
+		program.set_option(key, val);
 		return true;
 	}
 	
