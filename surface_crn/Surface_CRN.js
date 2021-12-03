@@ -67,13 +67,15 @@ class Surface_CRN {
                 var i = parseInt(value);
                 this.fps = i;
                 break;
-            default:
-                this.options.set(key, value);
         }
+        this.options.set(key, value);
     }
     export() {
         let output = [];
         // Options here
+        for (let [k, v] of this.options) {
+            output.push(k + " = " + v);
+        }
         // Transition rules here
         output.push("!START_TRANSITION_RULES");
         output.push(...this.rules.map(a => a.toString()));

@@ -5,7 +5,6 @@ class Species_Matcher {
         this.original_string = "";
         this.matched = [];
         this.update_matched(init);
-        this.original_string = init;
     }
     includes(s) {
         return s === this.original_string;
@@ -18,6 +17,7 @@ class Species_Matcher {
         return this.original_string;
     }
     update_matched(s) {
+        this.original_string = s;
         this.matched = this.decompose_matcher(s);
     }
     decompose_matcher(s, matches = []) {

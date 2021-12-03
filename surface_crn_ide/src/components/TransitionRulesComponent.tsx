@@ -47,9 +47,9 @@ class RuleRowComponent extends React.Component<{rule: Transition_Rule, deleteRul
 		this.rule = props.rule;
 		this.state = {
 			reactant0 : props.rule.reactants[0].original_string,
-			reactant1 : !props.rule.is_mono ? props.rule.reactants[1].original_string : '',
+			reactant1 : !props.rule.is_mono && props.rule.reactants.length > 1 ? props.rule.reactants[1].original_string : '',
 			product0 : props.rule.products[0].original_string,
-			product1 : !props.rule.is_mono ? props.rule.products[1].original_string : '',
+			product1 : !props.rule.is_mono && props.rule.products.length > 1 ? props.rule.products[1].original_string : '',
 			rate : props.rule.rate,
 		}
 		this.deleteRule = props.deleteRule;

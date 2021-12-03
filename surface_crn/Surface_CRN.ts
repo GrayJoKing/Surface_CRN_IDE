@@ -67,30 +67,32 @@ export default class Surface_CRN {
 				var i = parseInt(value);
 				this.fps = i;
 				break;
-			default:
-				this.options.set(key, value);
 		}
+		this.options.set(key, value);
 	}
 	
 	export() : string {
 		let output = [];
 		
 		// Options here
+		for (let [k,v] of this.options) {
+			output.push(k + " = " + v);
+		}
 		
 		// Transition rules here
-		output.push("!START_TRANSITION_RULES")
+		output.push("!START_TRANSITION_RULES");
 		output.push(...this.rules.map(a => a.toString()));
-		output.push("!END_TRANSITION_RULES\n")
+		output.push("!END_TRANSITION_RULES\n");
 		
 		// Colour mapping
-		output.push(["!START_COLORMAP"])
+		output.push(["!START_COLORMAP"]);
 		output.push(...this.colour_map.export());
-		output.push(["!END_COLORMAP\n"])
+		output.push(["!END_COLORMAP\n"]);
 		
 		// Initial State
-		output.push(["!START_INIT_STATE"])
+		output.push(["!START_INIT_STATE"]);
 		output.push(...this.initial_state.map(a => a.join(' ')));
-		output.push(["!END_INIT_STATE\n"])
+		output.push(["!END_INIT_STATE\n"]);
 		
 		return output.join("\n");
 	}

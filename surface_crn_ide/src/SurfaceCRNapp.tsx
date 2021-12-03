@@ -53,7 +53,7 @@ export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappStat
 					</TabPanel>
 				</Tabs>
 				<ColourMappingComponent ref={elem => this.colour_map_component = elem} model={this.state.model} refreshColour={this.refreshColour.bind(this)} addColour={this.addColour.bind(this)} deleteColour={this.deleteColour.bind(this)}/>
-				<TransitionRulesComponent ref={elem => this.transition_state_component = elem} model={this.state.model} addRule={this.addRule} deleteRule={this.deleteRule}/>
+				<TransitionRulesComponent ref={elem => this.transition_state_component = elem} model={this.state.model} addRule={this.addRule.bind(this)} deleteRule={this.deleteRule}/>
 				<ImportExportComponent export_code={this.export_code.bind(this)} import_code={this.import_code.bind(this)} import_example={this.import_example.bind(this)}/>
 			</div>
 	}

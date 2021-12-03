@@ -4,8 +4,7 @@ export default class Species_Matcher {
 	matched : string[] = [];
 	
 	public constructor(init : string) {
-		this.update_matched(init)
-		this.original_string = init;
+		this.update_matched(init);
 	}
 	
 	public includes(s : string) : boolean {
@@ -22,6 +21,7 @@ export default class Species_Matcher {
 	}
 	
 	public update_matched(s : string) {
+		this.original_string = s;
 		this.matched = this.decompose_matcher(s);
 	}
 	
