@@ -41,4 +41,4 @@ yarn-error.log*
 /.changelog
 .npm/
 dist
-/surface_crn/build_dir/
+build_dir/
