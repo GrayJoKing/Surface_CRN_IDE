@@ -13,7 +13,7 @@ function parse_rule(line) {
         return false;
     let rate = 1;
     line = line.replace(/\((\d*(?:\.\d+)?)\)/, (_, x) => { rate = +x; return ''; });
-    let [start, end] = line.split('->').map(a => a.split('+').map(b => new Species_Matcher_1.default(b.trim()))); // Note change how transition rules are formed
+    let [start, end] = line.split('->').map(a => a.split('+').map(b => b.trim())); // Note change how transition rules are formed
     //TODO: add more conditions (and error messages?)
     if (start.length != end.length || start.length > 2 || start.length == 0)
         return false;

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const Species_Matcher_1 = __importDefault(require("./Species_Matcher"));
+const Custom_Regex_Decomposer_1 = __importDefault(require("./Custom_Regex_Decomposer"));
 class Transition_Rule {
     constructor(init) {
         this.is_mono = true;
@@ -19,25 +19,23 @@ class Transition_Rule {
     update(p) {
         // TODO: add error checking
         Object.assign(this, p);
+        if (this.reactants.length !== this.products.length)
+            throw "Reactants and products are not equal length";
         this.is_mono = this.reactants.length < 2 && this.products.length < 2;
+        this.decomposed = Custom_Regex_Decomposer_1.default.decompose(this.reactants.join(' + ') + " -> " + this.products.join(' + ')).map(a => a.split(/ \+ | \-> /)).filter(a => a.every(x => x !== ""));
     }
     static blankRule() {
-        return new Transition_Rule({ is_mono: true, reactants: [new Species_Matcher_1.default('')], products: [new Species_Matcher_1.default('')] });
+        return new Transition_Rule({ is_mono: true, reactants: [''], products: [''] });
     }
     matches(x, y) {
         if (this.is_mono === (y !== undefined))
-            return false;
+            return [];
         if (this.is_mono) {
-            if (this.reactants[0].includes(x)) {
-                return [this.products[0].original_string];
-            }
+            return this.decomposed.filter(a => a[0] === x).map(a => [a[1]]);
         }
         else {
-            if (this.reactants[0].includes(x) && this.reactants[1].includes(y)) {
-                return [this.products[0].original_string, this.products[1].original_string];
-            }
+            return this.decomposed.filter(a => a[0] === x && a[1] === y).map(a => [a[2], a[3]]);
         }
-        return false;
     }
 }
 exports.default = Transition_Rule;

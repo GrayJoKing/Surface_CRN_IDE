@@ -224,7 +224,7 @@ class Surface_CRN {
                 if (rule.is_mono && rule.matches(current_cell)) {
                     rs.push(rule);
                 } else if (!rule.is_mono && rule.m) {
-                    
+
                 }
             }
             this.rule_check_cache[current_cell] = rs;
@@ -236,8 +236,8 @@ class Surface_CRN {
         }
         for (let rule of rs) {
             if (rule.is_mono) {
-                let r = rule.matches(current_cell);
-                if (r) {
+                let m = rule.matches(current_cell);
+                for (const r of m) {
                     let t = this.sim_time + Math.log(1 / random_1.default.float()) / rule.rate;
                     // if (best_mono_transition !== null && best_mono_transition.execution_time > t) continue;
                     let tr = new Transition_State_1.default(this.sim_time, t);
@@ -259,8 +259,8 @@ class Surface_CRN {
                         if (ignore.has([x + xd, y + yd]))
                             continue;
                         let other_cell = this.current_state[y + yd][x + xd];
-                        let r = rule.matches(current_cell, other_cell);
-                        if (r) {
+                        let m = rule.matches(current_cell, other_cell);
+                        for (const r of m) {
                             let t = this.sim_time + Math.log(1 / random_1.default.float()) / rule.rate;
                             //if (best_transition && best_transition.execution_time > t) continue;
                             let tr = new Transition_State_1.default(this.sim_time, t);
@@ -270,8 +270,8 @@ class Surface_CRN {
                             tr.add_new_cell(x + xd, y + yd, r[1]);
                             possible_transitions.push(tr);
                         }
-                        r = rule.matches(other_cell, current_cell);
-                        if (r) {
+                        m = rule.matches(other_cell, current_cell);
+                        for (const r of m) {
                             let t = this.sim_time + Math.log(1 / random_1.default.float()) / rule.rate;
                             //if (best_transition && best_transition.execution_time > t) continue;
                             let tr = new Transition_State_1.default(this.sim_time, t);
