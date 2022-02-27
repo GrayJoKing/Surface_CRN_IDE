@@ -12,16 +12,17 @@ interface ImportState {
 }
 
 export class ImportExportComponent extends React.Component<ImportProps, ImportState> {
-	
+
 	public constructor(props: ImportProps) {
 		super(props);
 		this.state = {example_selected : ""}
 	}
-	
-	
+
+
 	render () {
 		const example_files = [
 			{ value: './examples/two-bit-adder.txt', label: 'Two Bit Adder' },
+			{ value: './examples/two-bit-adder_new.txt', label: 'Two Bit Adder New' },
 			{ value: './examples/alternate_line_builder.txt', label: 'Line Builder' },
 			{ value: './examples/Brusselator.txt', label: 'Brusselator' },
 			{ value: './examples/busy_beaver.txt', label: 'Busy Beaver' },
@@ -35,7 +36,7 @@ export class ImportExportComponent extends React.Component<ImportProps, ImportSt
 			{ value: './examples/sierpinski_1D_synch.txt', label: '1D Sierpinski' },
 			{ value: './examples/smarter_scout_ant.txt', label: 'Smarter Scout Ant' }
 		]
-		
+
 		return <div className="grid panel import_export_panel">
 				<h3> Import/Export </h3>
 				<div>

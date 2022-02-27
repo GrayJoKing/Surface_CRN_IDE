@@ -1,0 +1,175 @@
+# A 2-bit adder circuit.
+#
+# Four inputs, X1 X2 X3 X4 at the top.
+# Three outputs Y1 Y2 Y3 from bottom center to middle right.
+# X1 X2 + X3 X4 = Y1 Y2 Y3
+# e.g. the input used here is
+# 1 1 + 0 1 = 1 0 0
+
+pixels_per_node    = 20
+speedup_factor     = 100
+debug              = False
+max_duration       = 1000
+fps                = 60
+node_display       = Color
+# rng_seed           = 123123123
+
+!START_TRANSITION_RULES
+# Logic circuit rule set optimized for readability and, to a lesser extent,
+#   compressed physical layout.
+# Gates lock during computation, allowing sequential gate logic.
+
+### WIRE RULES
+(1) (01) + B -> B + \1
+
+### Shared gate rules
+# Load
+(1) (01) + B(ACRX)(xy) -> B + \1\2\3
+(1) (01)(ARX)x + B\2z -> H\2x + \1\2z
+
+# Unload
+(1) (01)(ARX)k + B -> RR\2z + \1
+
+# Reset
+(1) RR(ARX)z + H\1x -> R\1z + B\1x
+(1) R(ARX)z + H\1y -> B\1z + B\1y
+
+
+### OR GATE
+(1) {01}Ry + (01)Rz -> HRy + {\1|1}Rk
+
+### XOR GATE
+(1) 0Xy + (01)Xz -> HXy + \1Xk
+(1) 1Xy + {01}Xz -> HXy + {10}Xk
+
+### AND GATE
+(1) 0Ay + [01]Az -> HAy + 0Ak
+(1) 1Ay + (01)Az -> HAy + \1Ak
+
+
+### SYNC GATE
+### 4 rules
+# Load
+(1) (01) + BSx -> B + \1Sx
+(1) (01)Sx + BSy -> BSx + \1Sy
+# Synchronize
+(1) (01)Sy + (01)Sy -> \1Sz + \2Sz
+# Unload
+(1) (01)Sz + B -> BSy + \1
+
+### REPEATER GATE
+### 3 rules
+# Load
+(1) (01) + BPx -> B + \1Px
+# Logic
+(1) (01)Px + BPy -> BPx + \1Pk
+# Unload
+(1) (01)Pk + B -> BPy + \1
+
+### NOT gate rules
+### 3 rules
+# Load
+(1) (01) + BNx -> B + \1Nx
+# Logic
+(1) {01}Nx + BNy -> BNx + {10}Ny
+# Unload
+(1) (01)Ny + B -> BNy + \1
+
+
+### 2-FAN-OUT
+### 4 rules
+# Load
+(1) (01) + BF -> B + \1F
+# "Logic"
+(1) (01)F + BFx -> \1f + \1Fx
+(1) (01)f + BFy -> BF + \1Fy
+# Unload
+(1) (01)F(xy) + B -> BF\2 + \1
+
+### 3-FAN-OUT
+### 4 rules
+# Load
+(1) (01) + BF3 -> B + \1FF
+# "Logic"
+(1) (01)F{Ff} + BF{xy}3 -> \1{Ff}f + \1F{xy}3
+(1) (01)ff + BFz3 -> BF3 + \1Fz3
+# Unload
+(1) (01)F(xyz)3 + B -> BF\<2>3 + \1
+
+### WIRE CROSS
+### 5 rules
+# Signal push to center
+(1) (01)C(xy) + BC -> HC\2 + \1C\2
+# Signal push to output
+(1) (01)C{xy} + BC{wz} -> BC + \1C{wz}
+# Unload
+(1) (01)C(wz) + B -> RC\2 + \1
+# Reset
+(1) RC(wz) + BC -> BC\1 + RCc\1
+(1) RCc{wz} + HC{xy} -> BC + BC{xy}
+
+
+!END_TRANSITION_RULES
+
+!START_COLORMAP
+# Color definitions for logic gates
+
+### SIGNALS
+{Inert State} I: (255, 255, 255)
+{Blank Wire} B: (191, 191, 191)
+{0 signal} 0[xyXRANfFCPS]?[xykzFfw]?[3xwy]?2?: (215,25,28)
+{1 signal} 1[XRANfFCPS]?[xykzFfw]?[3xwy]?2?: (229,223,70)
+
+### GATES
+{Sync Gate} BS[xy]: (251, 174, 210)
+{XOR Gate} BX[xyz]: (79, 29, 189)
+{OR Gate} BR[xyz]: (43,131,186)
+{AND Gate} BA[xyz]: (98,188,70)
+{NOT Gate} BN[xy]: (253,174,97)
+{Repeater Gate} BP[xy]: (200, 200, 200)
+
+### WIRE UTILITIES
+{Fan-Out} BF, BF[3xyz]3?: (0, 0, 0)
+{Wire Cross} BC[wzxy]?, Bx: (127, 127, 127)
+
+### INTERMEDIATES
+{Reset Signal} RR?Xz, RR?[AR]z, RCc?[wz]: (255, 102, 0)
+{Holding Input} H[ARCX][xy]: (200, 200, 100)
+
+
+!END_COLORMAP
+
+!START_INIT_STATE
+I,I,I,I,1,I,1,I,0,I,I,1,I,I,I,I,I,I
+I,I,I,I,B,I,B,I,BCy,I,I,B,B,B,B,I,I,I
+I,I,B,BFy,BF,I,B,BCx,BC,BCw,B,I,I,I,BCy,I,I,I
+I,B,B,I,BFx,I,I,I,BCz,I,BF,BFy,B,BCx,BC,BCw,B,I
+I,B,I,I,B,I,I,I,B,I,BFx,I,I,I,BCz,I,B,I
+I,B,I,B,B,I,I,B,B,I,B,B,B,I,B,I,B,I
+I,B,I,B,I,I,I,BCy,I,I,I,I,B,I,B,I,B,I
+I,B,I,B,I,B,BCw,BC,BCx,B,BFy,I,BAy,I,B,I,B,I
+I,B,I,B,I,B,I,BCz,I,I,BF,B,BAz,I,B,I,B,I
+I,B,I,B,I,B,I,B,B,I,BFx,I,BAx,I,B,I,B,I
+I,B,I,B,I,B,I,I,B,I,B,I,B,BFy,BF,I,B,I
+I,B,I,B,I,B,I,I,B,I,B,B,I,I,BFx,I,B,I
+I,B,I,B,I,B,I,BFx,BF,BFy,I,B,I,I,B,I,B,I
+I,B,I,B,I,B,I,B,I,B,I,B,B,I,BXy,I,B,I
+I,B,I,B,I,B,I,BAx,I,B,B,I,BXy,I,BXz,BXx,B,I
+I,B,I,B,I,B,BAy,BAz,B,I,B,BXx,BXz,I,B,I,I,I
+I,B,I,B,B,I,I,I,B,B,I,I,B,I,I,I,I,I
+I,B,B,I,BXy,BXz,BXx,B,I,B,B,I,B,I,I,I,I,I
+I,I,B,I,I,B,I,BFx,I,I,BCx,I,B,I,I,I,I,I
+I,I,BAy,I,I,B,I,BF,B,BCz,BC,BCy,B,I,I,I,I,I
+I,B,BAz,BAx,I,B,I,BFy,I,I,BCw,I,I,I,I,I,I,I
+I,B,I,B,I,BCx,I,B,I,I,B,I,I,I,I,I,I,I
+I,B,I,B,BCz,BC,BCy,B,I,I,B,I,I,I,I,I,I,I
+I,B,B,I,I,BCw,I,I,I,I,BCx,I,I,I,I,I,I,I
+I,I,B,B,I,B,B,B,B,BCy,BC,BCz,B,I,I,I,I,I
+I,I,I,B,B,I,I,I,I,I,BCw,I,I,I,I,I,I,I
+I,I,I,I,BRx,BRz,BRy,B,B,B,B,I,I,I,I,I,I,I
+I,I,I,I,I,B,I,I,I,I,I,I,I,I,I,I,I,I
+I,I,I,I,I,I,I,I,I,I,I,I,I,I,I,I,I,I
+I,I,I,I,I,I,I,I,I,I,I,I,I,I,I,I,I,I
+I,I,I,I,I,I,I,I,I,I,I,I,I,I,I,I,I,I
+I,I,I,I,I,I,I,I,I,I,I,I,I,I,I,I,I,I
+!END_INIT_STATE

@@ -18,10 +18,10 @@ export default class TransitionRulesComponent extends React.Component<Transition
 
 	render() {
 		// TODO: figure out better way of unique indexing
-		
+
 		return <div className="grid panel rules_panel">
 			<h3 className="panel_header"> Transition Rules </h3>
-			
+
 			<div id="rule_container">
 				{this.state.rules_list.map((r : Transition_Rule, i : number) => <RuleRowComponent key={r.toString() + i.toString()} rule={r} deleteRule={() => this.props.deleteRule(r)} />)}
 				<div onClick={this.props.addRule}> Add Rule </div>
@@ -41,23 +41,24 @@ interface RuleRowState {
 class RuleRowComponent extends React.Component<{rule: Transition_Rule, deleteRule : React.MouseEventHandler<Element>}, RuleRowState> {
 	rule : Transition_Rule;
 	deleteRule : React.MouseEventHandler<Element>;
-	
+
 	constructor(props : {rule : Transition_Rule, deleteRule : React.MouseEventHandler<Element>}) {
 		super(props);
 		this.rule = props.rule;
 		this.state = {
-			reactant0 : props.rule.reactants[0].original_string,
-			reactant1 : !props.rule.is_mono && props.rule.reactants.length > 1 ? props.rule.reactants[1].original_string : '',
-			product0 : props.rule.products[0].original_string,
-			product1 : !props.rule.is_mono && props.rule.products.length > 1 ? props.rule.products[1].original_string : '',
+			reactant0 : props.rule.reactants[0],
+			reactant1 : !props.rule.is_mono && props.rule.reactants.length > 1 ? props.rule.reactants[1] : '',
+			product0 : props.rule.products[0],
+			product1 : !props.rule.is_mono && props.rule.products.length > 1 ? props.rule.products[1] : '',
 			rate : props.rule.rate,
 		}
 		this.deleteRule = props.deleteRule;
 	}
-	
+
 	render() {
 		// TODO: gray out mono'd rules
-		
+		// TODO: make invalid rules red
+
 		return <div className="rulesRow grid">
 			<div> <input value={this.state.rate} type="number" className="rulesRate" onChange={this.updateRule.bind(this)} min="0" step="0.1"/> </div>
 			<div> <input value={this.state.reactant0} className="rulesReactant0" onChange={this.updateRule.bind(this)}/> </div>
@@ -70,34 +71,50 @@ class RuleRowComponent extends React.Component<{rule: Transition_Rule, deleteRul
 			<FaTrash onClick={this.deleteRule} />
 		</div>;
 	}
-	
+
 	updateRule(e : React.ChangeEvent<HTMLInputElement>) {
 		let reactants = this.rule.reactants;
 		let products = this.rule.products;
 		let newVal : string = e.currentTarget.value;
 		switch (e.target.className) {
 			case "rulesReactant0":
-				reactants[0] = new Species_Matcher(newVal);
-				this.rule.update({reactants : reactants});
+				reactants[0] = newVal;
+				try {
+					this.rule.update({reactants : reactants.filter(a => a !== "")});
+				} catch {
+					// set to red
+				}
 				this.setState({reactant0 : newVal});
 				break;
 			case "rulesReactant1":
-				reactants[1] = new Species_Matcher(newVal);
-				this.rule.update({reactants : reactants});
+				reactants[1] = newVal;
+				try {
+					this.rule.update({reactants : reactants.filter(a => a !== "")});
+				} catch {
+					// set to red
+				}
 				this.setState({reactant1 : newVal});
 				break;
 			case "rulesProduct0":
-				products[0] = new Species_Matcher(newVal);
-				this.rule.update({products : products});
+				products[0] = newVal;
+				try {
+					this.rule.update({products : products.filter(a => a !== "")});
+				} catch {
+					// set to red
+				}
 				this.setState({product0 : newVal});
 				break;
 			case "rulesProduct1":
-				products[1] = new Species_Matcher(newVal);
-				this.rule.update({products : products});
+				products[1] = newVal;
+				try {
+					this.rule.update({products : products.filter(a => a !== "")});
+				} catch {
+					// set to red
+				}
 				this.setState({product1 : newVal});
 				break;
 			case "rulesRate":
-				products[1] = new Species_Matcher(newVal);
+				products[1] = newVal;
 				this.rule.update({rate : +newVal});
 				this.setState({rate : +newVal});
 				break;
