@@ -23,8 +23,12 @@
   "dependencies": {
     "build": "^0.1.4",
     "random": "^3.0.6",
+    "random-seedable": "^1.0.8",
     "seedrandom": "^3.0.5",
     "ts-priority-queue": "^0.1.1",
     "xregexp": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/seedrandom": "^3.0.2"
   }
 }

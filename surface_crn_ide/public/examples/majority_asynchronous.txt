@@ -25,7 +25,7 @@ max_duration       = 100
 node_display       = Color
 
 # Comment this line back in to see the same thing on a hex grid
-# geometry = hex
+geometry = hex
 
 # Transition rules
 !START_TRANSITION_RULES

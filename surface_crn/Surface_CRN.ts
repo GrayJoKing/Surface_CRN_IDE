@@ -6,7 +6,7 @@ import Colour from './Colour';
 import Transition_State from './Transition_State';
 import {parse_import_files, parse_code} from './Parser';
 import PriorityQueue from 'ts-priority-queue';
-import random from 'random';
+import {MersenneTwister} from 'random-seedable';
 
 interface Surface_CRN_State {
 	initial_state : string[][]
@@ -28,6 +28,8 @@ export default class Surface_CRN {
 	speedup_factor : number = 0.5;
 	fps : number = 30;
 
+	random : MersenneTwister | null = null;
+
 	static parser = {parse_import_files, parse_code};
 
 	constructor(p : Partial<Surface_CRN_State> = {}) {
@@ -42,6 +44,11 @@ export default class Surface_CRN {
 		this.rules.push(Transition_Rule.blankRule());
 	}
 
+	set_cell(x : number, y : number, val : string) {
+		this.initial_state[y][x] = val;
+		// TODO: add on new rows/columns
+	}
+
 	set_option(key : string, value : string) {
 		switch (key) {
 			case "geometry":
@@ -52,19 +59,19 @@ export default class Surface_CRN {
 				}
 				break;
 			case "rng_seed":
-				var i = parseInt(value);
+				var i = parseFloat(value);
 				this.rng_seed = i;
 				break;
 			case "pixels_per_node":
-				var i = parseInt(value);
+				var i = parseFloat(value);
 				this.pixels_per_node = i;
 				break;
 			case "speedup_factor":
-				var i = parseInt(value);
+				var i = parseFloat(value);
 				this.speedup_factor = i;
 				break;
 			case "fps":
-				var i = parseInt(value);
+				var i = parseFloat(value);
 				this.fps = i;
 				break;
 		}
@@ -115,8 +122,13 @@ export default class Surface_CRN {
 	}
 
 	start_sim() {
+		console.log(this.rules);
 		this.stop_sim();
-		if (this.rng_seed !== null) random.clone(this.rng_seed);
+		if (this.rng_seed !== null) {
+			this.random = new MersenneTwister(this.rng_seed);
+		} else {
+			this.random = new MersenneTwister();
+		}
 		this.sim_queue = new PriorityQueue<Transition_State>({comparator : (a,b) => a.execution_time-b.execution_time});
 
 		let initial_changes : Transition_State[] = [];
@@ -194,7 +206,7 @@ export default class Surface_CRN {
 				t.new_transitions = [];
 				let ignore : Set<[number,number]> = new Set<[number, number]>();
 				t.new_cells.forEach(([x,y,_]) => {
-					let newT = this.find_next_transitions(x,y, ignore);
+					let newT = this.find_next_transitions(x, y, ignore);
 					for (var tr of newT) {
 						this.sim_queue!.queue(tr);
 						t && t.new_transitions!.push(tr);
@@ -259,7 +271,7 @@ export default class Surface_CRN {
 			if (rule.is_mono) {
 				let m = rule.matches(current_cell)
 				for (const r of m) {
-					let t = this.sim_time + Math.log(1 / random.float()) / rule.rate;
+					let t = this.sim_time + Math.log(1 / this.random!.float()) / rule.rate;
 					// if (best_mono_transition !== null && best_mono_transition.execution_time > t) continue;
 					let tr = new Transition_State(this.sim_time, t);
 					tr.add_old_cell(x, y, current_cell);
@@ -269,9 +281,9 @@ export default class Surface_CRN {
 			} else {
 				let neighbour_offsets : [number, number][] = [];
 				if (this.geometry == 'square') {
-					neighbour_offsets = [[-1,0], [0,-1], [1,0], [0,1]]
+					neighbour_offsets = [[-1,0], [0,-1], [1,0], [0,1]];
 				} else {
-					//TODO: hex offsets
+					neighbour_offsets = [[1,0], [-1,0], [0,1], [y%2?1:-1,1], [0,-1], [y%2?1:-1,-1]];
 				}
 				for (let [xd,yd] of neighbour_offsets) {
 					if (y+yd >= 0 && y+yd < this.current_state.length && x+xd >= 0 && x+xd < this.current_state[y+yd].length) {
@@ -279,7 +291,7 @@ export default class Surface_CRN {
 						let other_cell = this.current_state[y+yd][x+xd];
 						let m = rule.matches(current_cell, other_cell);
 						for (const r of m) {
-							let t = this.sim_time + Math.log(1 / random.float()) / rule.rate;
+							let t = this.sim_time + Math.log(1 / this.random!.float()) / rule.rate;
 							//if (best_transition && best_transition.execution_time > t) continue;
 							let tr = new Transition_State(this.sim_time, t);
 							tr.add_old_cell(x, y, current_cell);
@@ -290,7 +302,7 @@ export default class Surface_CRN {
 						}
 						m = rule.matches(other_cell, current_cell);
 						for (const r of m) {
-							let t = this.sim_time + Math.log(1 / random.float()) / rule.rate;
+							let t = this.sim_time + Math.log(1 / this.random!.float()) / rule.rate;
 							//if (best_transition && best_transition.execution_time > t) continue;
 							let tr = new Transition_State(this.sim_time, t);
 							tr.add_old_cell(x, y, current_cell);
@@ -311,11 +323,15 @@ export default class Surface_CRN {
 	}
 
 	increase_size() {
-		this.pixels_per_node += 1;
+		if (this.pixels_per_node < 1) {
+			this.pixels_per_node = 1/(1/this.pixels_per_node-1);
+		} else {
+			this.pixels_per_node += 1;
+		}
 	}
 	decrease_size() {
 		if (this.pixels_per_node <= 1) {
-			this.pixels_per_node -= 0.1;
+			this.pixels_per_node = 1/(1/this.pixels_per_node+1);
 		} else {
 			this.pixels_per_node -= 1;
 		}

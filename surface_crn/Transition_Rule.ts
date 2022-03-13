@@ -20,7 +20,7 @@ export default class Transition_Rule {
 		Object.assign(this, p);
 		if (this.reactants.length !== this.products.length) throw "Reactants and products are not equal length";
 		this.is_mono = this.reactants.length < 2 && this.products.length < 2;
-		this.decomposed = Custom_Regex_Decomposer.decompose(this.reactants.join(' + ') + " -> " + this.products.join(' + ')).map(a => a.split(/ \+ | \-> /)).filter(a => a.every(x => x !== ""))
+		this.decomposed = Custom_Regex_Decomposer.decompose(this.reactants.join(' + ') + " -> " + this.products.join(' + ')).map(a => a.split(/ \+ | \-> /)).filter(a => a.every(x => x !== ""));
 	}
 
 	static blankRule() : Transition_Rule {

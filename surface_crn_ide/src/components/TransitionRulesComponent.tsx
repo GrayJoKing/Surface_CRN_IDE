@@ -1,7 +1,7 @@
 import React from 'react';
 import { FaTrash, FaPlus, FaArrowRight } from 'react-icons/fa';
 
-import SurfaceCRN, {Species_Matcher, Transition_Rule, Colour_Map, Colour} from 'surface_crn';
+import SurfaceCRN, {Transition_Rule} from 'surface_crn';
 
 interface TransitionRulesProps {
 	model : SurfaceCRN
@@ -73,8 +73,8 @@ class RuleRowComponent extends React.Component<{rule: Transition_Rule, deleteRul
 	}
 
 	updateRule(e : React.ChangeEvent<HTMLInputElement>) {
-		let reactants = this.rule.reactants;
-		let products = this.rule.products;
+		let reactants = [this.state.reactant0, this.state.reactant1];
+		let products = [this.state.product0, this.state.product1];
 		let newVal : string = e.currentTarget.value;
 		switch (e.target.className) {
 			case "rulesReactant0":

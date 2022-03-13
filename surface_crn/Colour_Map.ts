@@ -4,7 +4,7 @@ import Species_Matcher from './Species_Matcher';
 
 export default class Colour_Map {
 	colours : Set<Colour> = new Set<Colour>();
-	
+
 	public constructor(init ?: Set<Colour>) {
 		if (init) this.colours = init;
 	}
@@ -23,29 +23,29 @@ export default class Colour_Map {
 		return [...this.colours.values()].map(c => '{' + c.name + '} ' + [...c.species.values()].map(s => s.toString()).join(' ') + ' : (' + c.rgb().join(',') + ')');
 	}
 
-	example_colours : string[] = ['#ffffff', '#000000', '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#42d4f4', '#f032e6', '#bfef45', '#fabed4', '#469990', '#dcbeff', '#9A6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1', '#000075', '#a9a9a9'];
+	example_colours : Colour[] = ['#ffffff', '#000000', '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#42d4f4', '#f032e6', '#bfef45', '#fabed4', '#469990', '#dcbeff', '#9A6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1', '#000075', '#a9a9a9'].map(c=>new Colour(c));
 
 	temp_colours : Map<string, Colour> = new Map<string, Colour>();
 
-	public new_colour() : string {
-		let c = this.example_colours.find((a : string) => {
-			if ([...this.temp_colours.values(), ...this.colours.values()].find((c : Colour) => c.hex() === a) !== undefined) return false;
+	public new_colour() : Colour {
+		let c = this.example_colours.find((a : Colour) => {
+			if ([...this.temp_colours.values(), ...this.colours.values()].find((c : Colour) => c.hex() === a.hex()) !== undefined) return false;
 			return true;
 		});
 		if (c === undefined) {
-			return "#000000";
+			return new Colour("#000000");
 		} else {
 			return c;
 		}
 	}
-	
+
 	public add(c : Colour) {
 		this.colours.add(c);
 	}
 	public delete(c : Colour) {
 		this.colours.delete(c);
 	}
-	
+
 	public add_temp(s : string, c : Colour) {
 		this.temp_colours.set(s, c);
 	}

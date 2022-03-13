@@ -19,20 +19,16 @@ node_display       = Color
 #   compressed physical layout.
 # Gates lock during computation, allowing sequential gate logic.
 
-### WIRE RULES
-(1) (01) + B -> B + \1
-
 ### Shared gate rules
 # Load
-(1) (01) + B(ACRX)(xy) -> B + \1\2\3
+(1) (01) + B([ACRX][xy])? -> B + \1\2
 (1) (01)(ARX)x + B\2z -> H\2x + \1\2z
 
 # Unload
 (1) (01)(ARX)k + B -> RR\2z + \1
 
 # Reset
-(1) RR(ARX)z + H\1x -> R\1z + B\1x
-(1) R(ARX)z + H\1y -> B\1z + B\1y
+(1) R{R|}(ARX)z + H\1{xy} -> {RB}\1z + B\1{xy}
 
 
 ### OR GATE
