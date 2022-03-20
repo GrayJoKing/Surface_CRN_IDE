@@ -122,8 +122,10 @@ export default class Surface_CRN {
 	}
 
 	start_sim() {
-		console.log(this.rules);
-		this.stop_sim();
+		if (this.sim_started()) {
+			//this.stop_sim();
+			return;
+		}
 		if (this.rng_seed !== null) {
 			this.random = new MersenneTwister(this.rng_seed);
 		} else {

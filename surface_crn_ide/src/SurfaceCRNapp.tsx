@@ -4,54 +4,69 @@ import 'react-tabs/style/react-tabs.css';
 import Surface_CRN, {Transition_Rule, Colour} from 'surface_crn';
 import './index.css';
 import HeaderComponent from './components/HeaderComponent';
-import CRN_GridComponent from './components/Grid_StateComponent';
+import GridDisplayComponent from './components/GridDisplayComponent';
 import TransitionRulesComponent from './components/TransitionRulesComponent';
 import ColourMappingComponent from './components/ColourMappingComponent';
 import ImportExportComponent from './components/ImportExportComponent';
+import Point from './components/PointClass';
 
 interface SurfaceCRNappState {
 	model : Surface_CRN
 	playing_simulation : boolean
+	sim_started : boolean
 	sim_size : number
 	sim_time : number
+	geometry : "hex" | "square"
+
+	editValue : string
+	selectedCells : Point[]
 }
 
 export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappState> {
 
-	initial_state_component : CRN_GridComponent | null = null;
+	initial_state_component : GridDisplayComponent | null = null;
 	transition_state_component : TransitionRulesComponent | null = null;
 	colour_map_component : ColourMappingComponent | null = null;
-	simulator_component : CRN_GridComponent | null = null;
+	simulator_component : GridDisplayComponent | null = null;
 	header_component : HeaderComponent | null = null;
 
 	model_tabs : Tabs | null = null;
-	playing_simulation : boolean = false;
+	toolbarInput : HTMLInputElement | null = null;
 
 	constructor(_ : {}) {
 		super(_);
 		let model = new Surface_CRN({geometry : "square", initial_state : Array.from({length:5}, () => (Array.from({length:5}, () => 'I')))});
 		this.state = {
 			model : model,
+			geometry : model.geometry,
 			playing_simulation : false,
+			sim_started : false,
 			sim_size : model.pixels_per_node,
-			sim_time : 0
+			sim_time : 0,
+
+			editValue : "",
+			selectedCells : []
 		};
 	}
 
 	render() {
 		return <div className="main_grid grid">
-				<HeaderComponent playPressed={this.playPressed.bind(this)} stepBackPressed={this.stepBackwardPressed.bind(this)} stepForwardPressed={this.stepForwardPressed.bind(this)} fastBackwardPressed={this.fastBackwardPressed.bind(this)} fastForwardPressed={this.fastForwardPressed.bind(this)} stopPressed={this.stopPressed.bind(this)} ref={elem => this.header_component = elem}/>
+				<HeaderComponent playPressed={this.playPressed.bind(this)} stepBackPressed={this.stepBackwardPressed.bind(this)} stepForwardPressed={this.stepForwardPressed.bind(this)} fastBackwardPressed={this.fastBackwardPressed.bind(this)} fastForwardPressed={this.fastForwardPressed.bind(this)} stopPressed={this.stopPressed.bind(this)} simPlaying={this.state.playing_simulation} ref={elem => this.header_component = elem}/>
 				<Tabs className="panel state_panel" ref={elem => this.model_tabs = elem} onSelect={this.onTabSelect.bind(this)}>
 					<TabList>
 						<Tab>Initial State</Tab>
 						<Tab>Simulator</Tab>
+						<div style={{display:"inline"}}>
+							<input type={"text"} value={this.state.editValue} onChange={this.updateSelectedCells.bind(this)} ref={e => this.toolbarInput = e}></input>
+							<button onClick={this.changeGeometry.bind(this)}>{this.state.model.geometry === "hex" ? "Square" : "Hex"}</button>
+						</div>
 					</TabList>
 
 					<TabPanel style={{height:"100%"}}>
-						<CRN_GridComponent current_state={this.state.model.initial_state} colour_map={this.state.model.colour_map} geometry={this.state.model.geometry} ref={elem => this.initial_state_component = elem} update_state={this.updateInitState.bind(this)} size={this.state.sim_size} zoom={this.zoom.bind(this)} sim_time={null}/>
+						<GridDisplayComponent current_state={this.state.model.initial_state} colour_map={this.state.model.colour_map} geometry={this.state.model.geometry} ref={elem => this.initial_state_component = elem} size={this.state.sim_size} zoom={this.zoom.bind(this)} sim_time={null} selectedCells={this.selectedCells.bind(this)}/>
 					</TabPanel>
-					<TabPanel style={{height:"100%", position:"relative"}}>
-						<CRN_GridComponent current_state={this.state.model.sim_started() ? this.state.model.current_state : this.state.model.initial_state} colour_map={this.state.model.colour_map} geometry={this.state.model.geometry} ref={elem => this.simulator_component = elem} update_state={this.updateSimState.bind(this)} size={this.state.sim_size} zoom={this.zoom.bind(this)} sim_time={0}/>
+					<TabPanel style={{height:"100%"}}>
+						<GridDisplayComponent current_state={this.state.sim_started ? this.state.model.current_state : this.state.model.initial_state} colour_map={this.state.model.colour_map} geometry={this.state.model.geometry} ref={elem => this.simulator_component = elem} size={this.state.sim_size} zoom={this.zoom.bind(this)} sim_time={this.state.sim_time} selectedCells={this.selectedCells.bind(this)}/>
 					</TabPanel>
 				</Tabs>
 				<ColourMappingComponent ref={elem => this.colour_map_component = elem} model={this.state.model} refreshColour={this.refreshColour.bind(this)} addColour={this.addColour.bind(this)} deleteColour={this.deleteColour.bind(this)}/>
@@ -102,24 +117,32 @@ export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappStat
 	}
 
 	setPlaying(sim_playing : boolean) {
-		this.playing_simulation = sim_playing;
-		this.header_component!.setState({simPlaying : sim_playing});
-
+		this.setState({playing_simulation : sim_playing});
 	}
 
 	update_page(new_model : Surface_CRN) {
-		this.setPlaying(false);
-
 		this.model_tabs!.setState({selectedIndex : 0});
-		this.setState({model : new_model, sim_size : new_model.pixels_per_node, sim_time : 0});
+		this.setState({playing_simulation : false, model : new_model, geometry : new_model.geometry, sim_size : new_model.pixels_per_node, sim_time : 0});
 		this.transition_state_component!.setState({rules_list : this.state.model.rules});
 		this.colour_map_component!.setState({colours : this.state.model.colour_map.colours});
 
 		//this.refreshInitState();
 	}
 
+	changeGeometry() {
+		if (this.state.model.geometry === "hex") {
+			this.state.model.geometry = "square";
+		} else if (this.state.model.geometry === "square") {
+			this.state.model.geometry = "hex";
+		}
+		this.setState({geometry : this.state.model.geometry});
+		this.refreshSimState();
+		this.refreshInitState();
+	}
+
 	refreshInitState() {
 		if (this.initial_state_component !== null) {
+			//this.state.model.colour_map.clear_temp();
 			this.initial_state_component!.setState({
 				colour_map: this.state.model.colour_map,
 				geometry: this.state.model.geometry,
@@ -133,19 +156,21 @@ export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappStat
 		const sim = this.simulator_component;
 		const model = this.state.model;
 		if (sim !== null) {
-			sim.setState({colour_map: model.colour_map, size: model.pixels_per_node, sim_time: model.sim_time, data : sim.createData(model.sim_started() ? model.current_state : model.initial_state)});
+			this.setState({sim_time : model.sim_time});
+			sim.setState({colour_map: model.colour_map, size: model.pixels_per_node, data : sim.createData(model.sim_started() ? model.current_state : model.initial_state)});
 		}
 	}
 
+/*
 	updateInitState(x : number, y : number, s : string) {
 		this.state.model.set_cell(x, y, s);
 		this.refreshInitState();
 	}
-
 	updateSimState(x : number, y : number, s : string) {
-		//this.state.model.current_state[x][y] = s;
+		this.state.model.current_state[x][y] = s;
 		this.refreshSimState();
 	}
+*/
 
 	refreshColour() {
 		this.refreshInitState();
@@ -155,6 +180,7 @@ export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappStat
 	startSimulation() {
 		this.state.model.start_sim();
 		this.refreshSimState();
+		this.setState({sim_started : true});
 		console.log('sim started');
 	}
 
@@ -173,9 +199,10 @@ export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappStat
 		}
 	}
 
-	playPressed() {
+	playPressed(e : MouseEvent) {
+		e.preventDefault();
 		this.showSimulation();
-		if (this.playing_simulation) {
+		if (this.state.playing_simulation) {
 			this.setPlaying(false);
 		} else {
 			this.setPlaying(true);
@@ -184,7 +211,7 @@ export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappStat
 	}
 
 	playSimulation(started? : boolean) {
-		if (!started && !this.playing_simulation) return;
+		if (!started && !this.state.playing_simulation) return;
 		let b = this.state.model.next_frame();
 		this.refreshSimState();
 		if (!b) {
@@ -194,7 +221,8 @@ export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappStat
 		}
 	}
 
-	stepForwardPressed() {
+	stepForwardPressed(e : PointerEvent) {
+		e.preventDefault();
 		this.showSimulation();
 		if (!this.state.model.step_forward()) {
 			console.log('sim finished');
@@ -203,7 +231,8 @@ export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappStat
 		console.log('step forward');
 	}
 
-	stepBackwardPressed() {
+	stepBackwardPressed(e : PointerEvent) {
+		e.preventDefault();
 		this.showSimulation();
 		if (!this.state.model.step_backward()) {
 			console.log('sim start');
@@ -212,7 +241,8 @@ export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappStat
 		console.log('step backward');
 	}
 
-	fastForwardPressed() {
+	fastForwardPressed(e : PointerEvent) {
+		e.preventDefault();
 		this.showSimulation();
 		if (!this.state.model.next_frame()) {
 			console.log('sim finished');
@@ -221,7 +251,8 @@ export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappStat
 		console.log('fast forward');
 	}
 
-	fastBackwardPressed() {
+	fastBackwardPressed(e : PointerEvent) {
+		e.preventDefault();
 		this.showSimulation();
 		if (!this.state.model.prev_frame()) {
 			console.log('sim start');
@@ -230,10 +261,12 @@ export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappStat
 		console.log('fast backward');
 	}
 
-	stopPressed() {
+	stopPressed(e : PointerEvent) {
+		e.preventDefault();
 		this.setPlaying(false);
 		//this.model_tabs!.setState({selectedIndex : 0});
 		this.state.model.stop_sim();
+		this.setState({sim_started : false});
 		this.refreshSimState();
 	}
 
@@ -260,10 +293,27 @@ export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappStat
 	}
 
 	zoom(out : boolean) {
+		const oldZoom = this.state.model.pixels_per_node;
 		if (out) this.state.model.increase_size();
 		else this.state.model.decrease_size();
 		this.setState({sim_size : this.state.model.pixels_per_node});
 		this.refreshSimState();
 		this.refreshInitState();
+		return oldZoom/this.state.model.pixels_per_node;
+	}
+
+	selectedCells(selected : Point[], value : string) {
+		this.setState({selectedCells : selected, editValue : value});
+		this.toolbarInput!.focus();
+	}
+
+	updateSelectedCells(e : React.ChangeEvent<HTMLInputElement>) {
+		if (e.target.value.match(/^\w*$/)) {
+			this.setState({editValue : e.target.value});
+			for (let p of this.state.selectedCells) {
+				this.state.model.set_cell(p.x, p.y, e.target.value);
+			}
+			this.refreshInitState();
+		}
 	}
 }
