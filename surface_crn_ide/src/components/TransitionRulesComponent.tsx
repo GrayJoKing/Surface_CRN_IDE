@@ -1,32 +1,71 @@
 import React from 'react';
-import { FaTrash, FaPlus, FaArrowRight } from 'react-icons/fa';
+import AddIcon from "@mui/icons-material/Add";
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import DeleteIcon from '@mui/icons-material/Delete';
+import IconButton from '@mui/material/IconButton';
 
 import SurfaceCRN, {Transition_Rule} from 'surface_crn';
+import Grid from "@mui/material/Grid";
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import Card from '@mui/material/Card';
+import CardActions from '@mui/material/CardActions';
+import CardHeader from '@mui/material/CardHeader';
+import Collapse from '@mui/material/Collapse';
+import { TransitionGroup } from 'react-transition-group';
+
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
 
 interface TransitionRulesProps {
 	model : SurfaceCRN
+	rules : Transition_Rule[]
 	addRule : () => void
 	deleteRule : (r : Transition_Rule) => void
 }
 
-export default class TransitionRulesComponent extends React.Component<TransitionRulesProps, {rules_list : Transition_Rule[]}> {
+export default class TransitionRulesComponent extends React.Component<TransitionRulesProps, {}> {
 
 	constructor(props : TransitionRulesProps) {
 		super(props);
-		this.state = {rules_list : props.model.rules};
 	}
 
 	render() {
 		// TODO: figure out better way of unique indexing
 
-		return <div className="grid panel rules_panel">
-			<h3 className="panel_header"> Transition Rules </h3>
+		return <Grid item xs={12} sm={8}>
+			<Card>
+				<CardHeader title="Transition Rules" />
 
-			<div id="rule_container">
-				{this.state.rules_list.map((r : Transition_Rule, i : number) => <RuleRowComponent key={r.toString() + i.toString()} rule={r} deleteRule={() => this.props.deleteRule(r)} />)}
-				<div onClick={this.props.addRule}> Add Rule </div>
-			</div>
-		</div>;
+				<Grid container item id="colour_container" sx={{"overflow-y" : "auto", "max-height" : "20rem"}}>
+					<Table>
+						<TableHead>
+							<TableRow>
+								<TableCell>Rate</TableCell>
+								<TableCell align="center">Reactant</TableCell>
+								<TableCell></TableCell>
+								<TableCell align="center">Reactant</TableCell>
+								<TableCell></TableCell>
+								<TableCell align="center">Product</TableCell>
+								<TableCell></TableCell>
+								<TableCell align="center">Product</TableCell>
+							</TableRow>
+						</TableHead>
+						<TableBody>
+							{this.props.rules.map((r : Transition_Rule, i : number) => <RuleRowComponent key={r.toString() + i.toString()} rule={r} deleteRule={() => this.props.deleteRule(r)} />)}
+						</TableBody>
+					</Table>
+				</Grid>
+
+				<CardActions>
+					<Button variant="outlined" onClick={this.props.addRule}> Add Rule </Button>
+				</CardActions>
+			</Card>
+
+		</Grid>;
 	}
 }
 
@@ -59,65 +98,59 @@ class RuleRowComponent extends React.Component<{rule: Transition_Rule, deleteRul
 		// TODO: gray out mono'd rules
 		// TODO: make invalid rules red
 
-		return <div className="rulesRow grid">
-			<div> <input value={this.state.rate} type="number" className="rulesRate" onChange={this.updateRule.bind(this)} min="0" step="0.1"/> </div>
-			<div> <input value={this.state.reactant0} className="rulesReactant0" onChange={this.updateRule.bind(this)}/> </div>
-			<div> <FaPlus /> </div>
-			<div> <input value={this.state.reactant1} className="rulesReactant1" onChange={this.updateRule.bind(this)}/> </div>
-			<div> <FaArrowRight /> </div>
-			<div> <input value={this.state.product0} className="rulesProduct0" onChange={this.updateRule.bind(this)}/> </div>
-			<div> <FaPlus /> </div>
-			<div> <input value={this.state.product1} className="rulesProduct1" onChange={this.updateRule.bind(this)}/> </div>
-			<FaTrash onClick={this.deleteRule} />
-		</div>;
+		return <TableRow >
+			<TableCell> <TextField variant="filled" type="number" value={this.state.rate} onChange={this.updateRule.bind(this)} inputProps={{ inputMode: 'numeric', step : 0.1, pattern: '[0-9]+(\.[0-9]+)?', className : "rulesRate", min : 0, style: {"padding" : "5px"}}} /> </TableCell>
+			<TableCell padding="none"> <TextField variant="filled" value={this.state.reactant0} onChange={this.updateRule.bind(this)} inputProps={{className:"rulesReactant0", style: {"padding" : "5px"}}}/> </TableCell>
+			<TableCell padding="none" align="center"> <AddIcon /> </TableCell>
+			<TableCell padding="none" align="center"> <TextField variant="filled" value={this.state.reactant1} className="rulesReactant1" onChange={this.updateRule.bind(this)} inputProps={{className:"rulesReactant1", style: {"padding" : "5px"}}}/> </TableCell>
+			<TableCell padding="none" align="center"> <ArrowForwardIcon /> </TableCell>
+			<TableCell padding="none" align="center"> <TextField variant="filled" value={this.state.product0} className="rulesProduct0" onChange={this.updateRule.bind(this)} inputProps={{className:"rulesProduct0", style: {"padding" : "5px"}}}/> </TableCell>
+			<TableCell padding="none" align="center"> <AddIcon /> </TableCell>
+			<TableCell padding="none" align="center"> <TextField variant="filled" value={this.state.product1} className="rulesProduct1" onChange={this.updateRule.bind(this)} inputProps={{className:"rulesProduct1", style: {"padding" : "5px"}}}/> </TableCell>
+			<TableCell> <IconButton onClick={this.deleteRule}> <DeleteIcon/> </ IconButton> </TableCell>
+		</TableRow>;
 	}
 
 	updateRule(e : React.ChangeEvent<HTMLInputElement>) {
 		let reactants = [this.state.reactant0, this.state.reactant1];
 		let products = [this.state.product0, this.state.product1];
 		let newVal : string = e.currentTarget.value;
-		switch (e.target.className) {
-			case "rulesReactant0":
-				reactants[0] = newVal;
-				try {
-					this.rule.update({reactants : reactants.filter(a => a !== "")});
-				} catch {
-					// set to red
-				}
-				this.setState({reactant0 : newVal});
-				break;
-			case "rulesReactant1":
-				reactants[1] = newVal;
-				try {
-					this.rule.update({reactants : reactants.filter(a => a !== "")});
-				} catch {
-					// set to red
-				}
-				this.setState({reactant1 : newVal});
-				break;
-			case "rulesProduct0":
-				products[0] = newVal;
-				try {
-					this.rule.update({products : products.filter(a => a !== "")});
-				} catch {
-					// set to red
-				}
-				this.setState({product0 : newVal});
-				break;
-			case "rulesProduct1":
-				products[1] = newVal;
-				try {
-					this.rule.update({products : products.filter(a => a !== "")});
-				} catch {
-					// set to red
-				}
-				this.setState({product1 : newVal});
-				break;
-			case "rulesRate":
-				products[1] = newVal;
-				this.rule.update({rate : +newVal});
-				this.setState({rate : +newVal});
-				break;
+		if (e.target.classList.contains("rulesReactant0")) {
+			reactants[0] = newVal;
+			try {
+				this.rule.update({reactants : reactants.filter(a => a !== "")});
+			} catch {
+				// set to red
+			}
+			this.setState({reactant0 : newVal});
+		} else if (e.target.classList.contains("rulesReactant1")) {
+			reactants[1] = newVal;
+			try {
+				this.rule.update({reactants : reactants.filter(a => a !== "")});
+			} catch {
+				// set to red
+			}
+			this.setState({reactant1 : newVal});
+		} else if (e.target.classList.contains("rulesProduct0")) {
+			products[0] = newVal;
+			try {
+				this.rule.update({products : products.filter(a => a !== "")});
+			} catch {
+				// set to red
+			}
+			this.setState({product0 : newVal});
+		} else if (e.target.classList.contains("rulesProduct1")) {
+			products[1] = newVal;
+			try {
+				this.rule.update({products : products.filter(a => a !== "")});
+			} catch {
+				// set to red
+			}
+			this.setState({product1 : newVal});
+		} else if (e.target.classList.contains("rulesRate")) {
+			products[1] = newVal;
+			this.rule.update({rate : +newVal});
+			this.setState({rate : +newVal});
 		}
 	}
 }

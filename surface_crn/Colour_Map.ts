@@ -9,6 +9,10 @@ export default class Colour_Map {
 		if (init) this.colours = init;
 	}
 
+	public equals(c : Colour_Map) : boolean {
+		return !!([...c.colours].filter(a => !this.colours.has(a)) || [...this.colours].filter(a => !c.colours.has(a)));
+	}
+
 	public find_colour(s : string) : Colour | null {
 		for (let c of this.colours) {
 			if ([...c.species.values()].some((s1 : Species_Matcher) => s1.includes(s))) {

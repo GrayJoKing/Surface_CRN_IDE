@@ -1,7 +1,5 @@
 import React from 'react';
-import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
-import 'react-tabs/style/react-tabs.css';
-import Surface_CRN, {Transition_Rule, Colour} from 'surface_crn';
+import Surface_CRN, {Transition_Rule, Colour, Colour_Map} from 'surface_crn';
 import './index.css';
 import HeaderComponent from './components/HeaderComponent';
 import GridDisplayComponent from './components/GridDisplayComponent';
@@ -10,13 +8,44 @@ import ColourMappingComponent from './components/ColourMappingComponent';
 import ImportExportComponent from './components/ImportExportComponent';
 import Point from './components/PointClass';
 
+//now import CSS files:
+import "@fontsource/roboto/300.css";
+import "@fontsource/roboto/400.css";
+import "@fontsource/roboto/500.css";
+import "@fontsource/roboto/700.css";
+
+import CssBaseline from "@mui/material/CssBaseline";
+import Grid from "@mui/material/Grid";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import Card from "@mui/material/Card";
+
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+const theme = createTheme({
+	palette: {
+		mode: 'dark',
+		primary: {
+			main: '#2e7d32',
+		},
+		secondary: {
+			main: '#f50057',
+		},
+	},
+});
+
+
 interface SurfaceCRNappState {
+	shown_tab : number
+
 	model : Surface_CRN
-	playing_simulation : boolean
-	sim_started : boolean
 	sim_size : number
 	sim_time : number
 	geometry : "hex" | "square"
+	colour_map : Colour_Map
+	rules : Transition_Rule[]
+
+	playing_simulation : boolean
+	sim_started : boolean
 
 	editValue : string
 	selectedCells : Point[]
@@ -26,23 +55,27 @@ export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappStat
 
 	initial_state_component : GridDisplayComponent | null = null;
 	transition_state_component : TransitionRulesComponent | null = null;
-	colour_map_component : ColourMappingComponent | null = null;
 	simulator_component : GridDisplayComponent | null = null;
 	header_component : HeaderComponent | null = null;
 
-	model_tabs : Tabs | null = null;
+	model_tabs : HTMLButtonElement | null = null;
 	toolbarInput : HTMLInputElement | null = null;
 
 	constructor(_ : {}) {
 		super(_);
 		let model = new Surface_CRN({geometry : "square", initial_state : Array.from({length:5}, () => (Array.from({length:5}, () => 'I')))});
 		this.state = {
+			shown_tab : 0,
+
 			model : model,
-			geometry : model.geometry,
-			playing_simulation : false,
-			sim_started : false,
 			sim_size : model.pixels_per_node,
 			sim_time : 0,
+			geometry : model.geometry,
+			colour_map : model.colour_map,
+			rules : model.rules,
+
+			playing_simulation : false,
+			sim_started : false,
 
 			editValue : "",
 			selectedCells : []
@@ -50,29 +83,40 @@ export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappStat
 	}
 
 	render() {
-		return <div className="main_grid grid">
-				<HeaderComponent playPressed={this.playPressed.bind(this)} stepBackPressed={this.stepBackwardPressed.bind(this)} stepForwardPressed={this.stepForwardPressed.bind(this)} fastBackwardPressed={this.fastBackwardPressed.bind(this)} fastForwardPressed={this.fastForwardPressed.bind(this)} stopPressed={this.stopPressed.bind(this)} simPlaying={this.state.playing_simulation} ref={elem => this.header_component = elem}/>
-				<Tabs className="panel state_panel" ref={elem => this.model_tabs = elem} onSelect={this.onTabSelect.bind(this)}>
-					<TabList>
-						<Tab>Initial State</Tab>
-						<Tab>Simulator</Tab>
-						<div style={{display:"inline"}}>
-							<input type={"text"} value={this.state.editValue} onChange={this.updateSelectedCells.bind(this)} ref={e => this.toolbarInput = e}></input>
-							<button onClick={this.changeGeometry.bind(this)}>{this.state.model.geometry === "hex" ? "Square" : "Hex"}</button>
-						</div>
-					</TabList>
+		return <ThemeProvider theme={theme}>
+				<CssBaseline />
+				<Grid container spacing={1}>
+					<HeaderComponent playPressed={this.playPressed.bind(this)} stepBackPressed={this.stepBackwardPressed.bind(this)} stepForwardPressed={this.stepForwardPressed.bind(this)} fastBackwardPressed={this.fastBackwardPressed.bind(this)} fastForwardPressed={this.fastForwardPressed.bind(this)} stopPressed={this.stopPressed.bind(this)} simPlaying={this.state.playing_simulation} ref={elem => this.header_component = elem}/>
+					<Grid item xs={12} sm={8}>
+						<Card sx={{"height" : "28rem"}}>
+							<Grid container sx={{height : "100%"}}>
+								<Grid item xs={12} sx={{height : "20%"}}>
+									<Tabs value={this.state.shown_tab} onChange={this.onTabSelect.bind(this)}>
+										<Tab label="Initial State"></Tab>
+										<Tab label="Simulator"></Tab>
+									</Tabs>
+									<div style={{display:"inline"}}>
+										<input type={"text"} value={this.state.editValue} onChange={this.updateSelectedCells.bind(this)} ref={e => this.toolbarInput = e}></input>
+										<button onClick={this.changeGeometry.bind(this)}>{this.state.model.geometry === "hex" ? "Square" : "Hex"}</button>
+									</div>
+								</Grid>
 
-					<TabPanel style={{height:"100%"}}>
-						<GridDisplayComponent current_state={this.state.model.initial_state} colour_map={this.state.model.colour_map} geometry={this.state.model.geometry} ref={elem => this.initial_state_component = elem} size={this.state.sim_size} zoom={this.zoom.bind(this)} sim_time={null} selectedCells={this.selectedCells.bind(this)}/>
-					</TabPanel>
-					<TabPanel style={{height:"100%"}}>
-						<GridDisplayComponent current_state={this.state.sim_started ? this.state.model.current_state : this.state.model.initial_state} colour_map={this.state.model.colour_map} geometry={this.state.model.geometry} ref={elem => this.simulator_component = elem} size={this.state.sim_size} zoom={this.zoom.bind(this)} sim_time={this.state.sim_time} selectedCells={this.selectedCells.bind(this)}/>
-					</TabPanel>
-				</Tabs>
-				<ColourMappingComponent ref={elem => this.colour_map_component = elem} model={this.state.model} refreshColour={this.refreshColour.bind(this)} addColour={this.addColour.bind(this)} deleteColour={this.deleteColour.bind(this)}/>
-				<TransitionRulesComponent ref={elem => this.transition_state_component = elem} model={this.state.model} addRule={this.addRule.bind(this)} deleteRule={this.deleteRule.bind(this)}/>
-				<ImportExportComponent export_code={this.export_code.bind(this)} import_code={this.import_code.bind(this)} import_example={this.import_example.bind(this)}/>
-			</div>
+								<Grid item xs={12} sx={{height : "80%"}}>
+									{this.state.shown_tab === 0 &&
+										<GridDisplayComponent current_state={this.state.model.initial_state} colour_map={this.state.colour_map} geometry={this.state.geometry} ref={elem => this.initial_state_component = elem} size={this.state.sim_size} zoom={this.zoom.bind(this)} sim_time={null} selectedCells={this.selectedCells.bind(this)}/>
+									}
+									{this.state.shown_tab === 1 &&
+										<GridDisplayComponent current_state={this.state.sim_started ? this.state.model.current_state : this.state.model.initial_state} colour_map={this.state.colour_map} geometry={this.state.geometry} ref={elem => this.simulator_component = elem} size={this.state.sim_size} zoom={this.zoom.bind(this)} sim_time={this.state.sim_time} selectedCells={this.selectedCells.bind(this)}/>
+									}
+								</Grid>
+							</Grid>
+						</Card>
+					</Grid>
+					<ColourMappingComponent model={this.state.model} refreshColour={this.refreshColour.bind(this)} addColour={this.addColour.bind(this)} deleteColour={this.deleteColour.bind(this)} colour_map={this.state.colour_map}/>
+					<TransitionRulesComponent ref={elem => this.transition_state_component = elem} model={this.state.model} addRule={this.addRule.bind(this)} deleteRule={this.deleteRule.bind(this)} rules={this.state.rules}/>
+					<ImportExportComponent export_code={this.export_code.bind(this)} import_code={this.import_code.bind(this)} import_example={this.import_example.bind(this)}/>
+				</Grid>
+			</ThemeProvider>
 	}
 
 	async import_code() {
@@ -98,8 +142,8 @@ export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappStat
 		anchor.click();
 	}
 
-	import_example(file : string | null) {
-		if (file === null || file === "") return;
+	import_example(file : string) {
+		if (file === "") return;
 
 		let r = this;
 		fetch(file,
@@ -121,11 +165,7 @@ export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappStat
 	}
 
 	update_page(new_model : Surface_CRN) {
-		this.model_tabs!.setState({selectedIndex : 0});
-		this.setState({playing_simulation : false, model : new_model, geometry : new_model.geometry, sim_size : new_model.pixels_per_node, sim_time : 0});
-		this.transition_state_component!.setState({rules_list : this.state.model.rules});
-		this.colour_map_component!.setState({colours : this.state.model.colour_map.colours});
-
+		this.setState({shown_tab : 0, playing_simulation : false, model : new_model, geometry : new_model.geometry, sim_size : new_model.pixels_per_node, sim_time : 0, colour_map : new_model.colour_map, rules : [...new_model.rules]});
 		//this.refreshInitState();
 	}
 
@@ -185,17 +225,16 @@ export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappStat
 	}
 
 	showSimulation() {
-		this.model_tabs!.setState({selectedIndex : 1});
+		this.setState({shown_tab : 1})
 		if (!this.state.model.sim_started()) {
 			this.startSimulation();
 		}
 	}
 
-	onTabSelect(index: number, lastIndex: number, event: Event) {
-		if (index !== lastIndex) {
-			if (index === 1) {
-				this.startSimulation();
-			}
+	onTabSelect(e : React.SyntheticEvent, value : number) {
+		this.setState({shown_tab : value});
+		if (value === 1) {
+			this.startSimulation();
 		}
 	}
 
@@ -274,22 +313,22 @@ export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappStat
 		let c : Colour = this.state.model.colour_map.new_colour();
 		this.state.model.colour_map.add(Object.assign(c, {"name" : "New"}));
 
-		this.colour_map_component!.setState({colours : this.state.model.colour_map.colours})
+		this.setState({colour_map : this.state.model.colour_map});
 	}
 
 	deleteColour(c : Colour) {
 		this.state.model.colour_map.delete(c);
-		this.colour_map_component!.setState({colours : this.state.model.colour_map.colours})
+		this.setState({colour_map : this.state.model.colour_map});
 	}
 
 	deleteRule(r : Transition_Rule) {
 		this.state.model.remove_rule(r);
-		this.transition_state_component!.setState({rules_list : [...this.state.model.rules]});
+		this.setState({rules : [...this.state.model.rules]});
 	}
 
 	addRule() {
 		this.state.model.add_rule();
-		this.transition_state_component!.setState({rules_list : [...this.state.model.rules]});
+		this.setState({rules : [...this.state.model.rules]});
 	}
 
 	zoom(out : boolean) {

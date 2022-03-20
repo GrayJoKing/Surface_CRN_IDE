@@ -1,14 +1,23 @@
 import React from 'react';
-import Select, {SingleValue, ActionMeta} from 'react-select'
+
+import Grid from "@mui/material/Grid";
+import Button from '@mui/material/Button';
+import InputLabel from "@mui/material/InputLabel";
+import FormControl from "@mui/material/FormControl";
+import Select, {SelectChangeEvent} from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
+import Card from '@mui/material/Card';
+import CardActions from '@mui/material/CardActions';
+import CardHeader from '@mui/material/CardHeader';
 
 interface ImportProps {
 	import_code : () => Promise<void>
 	export_code : () => void
-	import_example : (s : string | null) => void
+	import_example : (s : string) => void
 }
 
 interface ImportState {
-	example_selected : string | null
+	example_selected : string
 }
 
 export class ImportExportComponent extends React.Component<ImportProps, ImportState> {
@@ -37,20 +46,33 @@ export class ImportExportComponent extends React.Component<ImportProps, ImportSt
 			{ value: './examples/smarter_scout_ant.txt', label: 'Smarter Scout Ant' }
 		]
 
-		return <div className="grid panel import_export_panel">
-				<h3> Import/Export </h3>
-				<div>
-					<Select options={example_files} isSearchable={true} isClearable={true} onChange={(newValue: SingleValue<{ value: string; label: string; }>, actionMeta: ActionMeta<{ value: string; label: string; }>) => this.setState({example_selected : newValue && newValue.value})} styles={{option : (provided, state) => ({...provided, color: 'black'})}} />
-					<button disabled={this.state.example_selected === ""} type="submit" id="import_example" onClick={() => this.props.import_example(this.state.example_selected)}> Import Example </button>
-				</div>
-				<div>
-					<input type="file" id="import_input" multiple />
-					<button type="submit" id="import_submit" onClick={this.props.import_code}> Import </button>
-				</div>
-				<div>
-					<button id="export" onClick={this.props.export_code}> Export </button>
-				</div>
-			</div>;
+		return <Grid item xs={12} sm={4}>
+				<Card>
+					<CardHeader title="Import/Export" />
+
+					<Grid container>
+						<Grid item xs={12} sm={8}>
+							<FormControl fullWidth>
+								<InputLabel id="example-label">Example</InputLabel>
+								<Select label="example-label" value={this.state.example_selected} onChange={ (e : SelectChangeEvent<string>) => this.setState({example_selected : e.target.value})} autoWidth>
+									{example_files.map(a => <MenuItem value={a.value}> {a.label} </MenuItem>)}
+								</Select>
+							</FormControl>
+						</Grid>
+						<Grid item xs={12} sm={4}>
+							<Button variant="contained" disabled={this.state.example_selected === ""} type="submit" id="import_example" onClick={() => this.props.import_example(this.state.example_selected)}> Import </Button>
+						</Grid>
+						</Grid>
+
+					<CardActions>
+						<Button variant="contained" component="label">
+							Import File(s)
+							<input type="file" id="import_input" multiple hidden onChange={this.props.import_code}/>
+						</Button>
+						<Button variant="contained" id="export" onClick={this.props.export_code}> Export File </Button>
+					</CardActions>
+				</Card>
+			</Grid>;
 	}
 }
 

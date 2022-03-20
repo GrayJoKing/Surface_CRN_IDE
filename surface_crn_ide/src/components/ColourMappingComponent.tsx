@@ -1,33 +1,48 @@
 import React from 'react';
-import SurfaceCRN, {Colour, Species_Matcher} from 'surface_crn';
+import SurfaceCRN, {Colour, Species_Matcher, Colour_Map} from 'surface_crn';
 import { HexColorPicker } from "react-colorful";
-import { FaAngleRight, FaTrash } from "react-icons/fa";
+import ArrowDropDownCircleTwoToneIcon from '@mui/icons-material/ArrowDropDownCircleTwoTone';
+import ArrowDropDownCircleOutlinedIcon from '@mui/icons-material/ArrowDropDownCircleOutlined';
+import DeleteIcon from '@mui/icons-material/Delete';
+import IconButton from '@mui/material/IconButton';
+
+import Grid from "@mui/material/Grid";
+import Button from '@mui/material/Button';
+import Card from '@mui/material/Card';
+import CardActions from '@mui/material/CardActions';
+import CardHeader from '@mui/material/CardHeader';
+import TextField from '@mui/material/TextField';
+import Collapse from '@mui/material/Collapse';
+import { TransitionGroup } from 'react-transition-group';
 
 interface ColourMappingProps {
 	model : SurfaceCRN
+	colour_map : Colour_Map
 	refreshColour : () => void
 	addColour : () => void
 	deleteColour : (c : Colour) => void
 }
 
-export default class ColourMappingComponent extends React.Component<ColourMappingProps, {colours : Set<Colour>}> {
-
-	constructor(props : ColourMappingProps) {
-		super(props);
-		this.state = {colours : this.props.model.colour_map.colours};
-	}
+export default class ColourMappingComponent extends React.Component<ColourMappingProps, {}> {
 
 	render() {
-		return <div className="grid panel colour_panel">
-			<h3> Colour Mapping </h3>
-
-			<div id="colour_container">
-				{[...this.state.colours.values()].map(v =>
-					<ColourRowComponent colour={v} key={v.name} onChange={this.props.refreshColour}/>
-				)}
-				<div onClick={this.props.addColour.bind(this)} style={{cursor: "pointer"}}> Add Colour </div>
-			</div>
-		</div>;
+		return <Grid item xs={12} sm={4}>
+			<Card>
+				<CardHeader title="Colour Mapping" />
+				<Grid container item sx={{"overflow-y" : "auto", "max-height" : "20rem"}}>
+					<TransitionGroup>
+						{[...this.props.colour_map.colours.values()].map((v, i) =>
+							<Collapse>
+								<ColourRowComponent colour={v} onChange={this.props.refreshColour} deleteColour={this.props.deleteColour}/>
+							</Collapse>
+						)}
+					</TransitionGroup>
+				</Grid>
+				<CardActions>
+					<Button variant="outlined" onClick={this.props.addColour.bind(this)}> Add Colour </Button>
+				</CardActions>
+			</Card>
+		</Grid>;
 	}
 }
 
@@ -42,6 +57,7 @@ interface ColourRowState {
 interface ColourRowProps {
 	colour : Colour
 	onChange : () => void
+	deleteColour : (c : Colour) => void
 }
 
 class ColourRowComponent extends React.Component<ColourRowProps,ColourRowState> {
@@ -79,29 +95,42 @@ class ColourRowComponent extends React.Component<ColourRowProps,ColourRowState> 
 	render() {
 		// TODO: disallow invalid chars in name
 		// TODO: make swatch more integrated (background colour of text? left tab thing)
-		return <div>
+		return <Grid item xs={12}>
 			<div className="picker">
 				<div
 					className="swatch"
 					style={{ backgroundColor: this.props.colour.hex() }}
 					onClick={() => !this.state.isOpen && this.setState({isOpen : !this.state.isOpen})}
 				/>
-				<input value={this.state.name} onChange={(e) => {let s = e.currentTarget.value; this.setState({name : s}); this.props.colour.name = s}} />
-				<FaAngleRight size={25} style={{cursor : 'pointer'}} onClick={(_) => {this.setState({showList : !this.state.showList})}} />
+				<TextField variant="filled" fullWidth margin="none" label="Name" value={this.state.name} onChange={(e) => {let s = e.currentTarget.value; this.setState({name : s}); this.props.colour.name = s}} />
+				<IconButton onClick={_ => this.setState({showList : !this.state.showList})}>
+					{this.state.showList ? <ArrowDropDownCircleTwoToneIcon /> : <ArrowDropDownCircleOutlinedIcon />}
+				</IconButton>
+				<IconButton onClick={_ => this.props.deleteColour(this.props.colour)}>
+					<DeleteIcon />
+				</IconButton>
 			</div>
 			{this.state.isOpen && (
 				<div className="popover" ref={(elem) => this.pickerRef = elem} >
-				<HexColorPicker color={this.props.colour.hex()} onChange={(s) => {this.setState({colour : s}); this.updateColour(s)}}/>
+					<HexColorPicker color={this.props.colour.hex()} onChange={(s) => {this.setState({colour : s}); this.updateColour(s)}}/>
 				</div>
 			)}
-			{this.state.showList &&
-				<div className="flexBox">
-					{[...this.state.species.values()].map((a : Species_Matcher) => <div> <input value={a.original_string} className="" onChange={this.updateSpecies(a).bind(this)}/> <FaTrash onClick={() => this.deleteMatcher(a)} /></div>)}
-					<div style = {{cursor : "pointer"}} onClick = {this.addMatcher.bind(this)}> Add Species </div>
-					<hr/>
-				</div>
-			}
-		</div>;
+			<TransitionGroup>
+				{this.state.showList &&
+					<Collapse>
+						<TransitionGroup>
+							{[...this.state.species.values()].map((a : Species_Matcher) =>
+								<Collapse>
+									<TextField value={a.original_string} onChange={this.updateSpecies(a).bind(this)} inputProps={{style: {"padding" : "5px"}}}/>
+									<IconButton onClick={() => this.deleteMatcher(a)}> <DeleteIcon /> </IconButton>
+								</Collapse>
+							)}
+						</TransitionGroup>
+						<Button variant="outlined" onClick = {this.addMatcher.bind(this)}> Add Species </Button>
+					</Collapse>
+				}
+			</TransitionGroup>
+		</Grid>;
 	}
 
 	updateColour(s : string) {

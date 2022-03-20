@@ -1,5 +1,15 @@
 import React from 'react';
-import {FaPlay, FaPause, FaStop, FaStepBackward, FaStepForward, FaFastBackward, FaFastForward} from 'react-icons/fa';
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import PauseIcon from "@mui/icons-material/Pause";
+import FastForwardIcon from "@mui/icons-material/FastForward";
+import FastRewindIcon from "@mui/icons-material/FastRewind";
+import ForwardIcon from "@mui/icons-material/Forward10";
+import ReplayIcon from "@mui/icons-material/Replay10";
+import StopIcon from "@mui/icons-material/Stop";
+import IconButton from "@mui/material/IconButton";
+
+import Typography from "@mui/material/Typography";
+import Grid from "@mui/material/Grid";
 
 interface HeaderProps {
 	playPressed : (_ : any) => void
@@ -19,39 +29,26 @@ export default class HeaderComponent extends React.Component<HeaderProps, {}> {
 	stepForward : Element | null = null;
 	fastForward : Element | null = null;
 
-	constructor(p : HeaderProps) {
-		super(p);
-	}
-
 	render() {
-		return <header className="grid">
-			<nav className="grid">
-				<h2 className="grid title">
+		return <Grid item container xs={12}>
+			<Grid item xs={12} sm={8}>
+				<Typography variant="h3" className="grid title">
 					Surface CRN Simulator
-				</h2>
-				<h4 className="grid simulator_options">
-				</h4>
-				<h4 className="simulator_controls">
-					<span ref={e => this.stopButton = e}> <FaStop size={25}/> </span>
-					<span ref={e => this.fastBackward = e}> <FaFastBackward size={25}/> </span>
-					<span ref={e => this.stepBackward = e}> <FaStepBackward size={25}/> </span>
-					<span ref={e => this.playButton = e}> {this.props.simPlaying
-						? <FaPause size={25}/>
-						: <FaPlay size={25}/>
-					} </span>
-					<span ref={e => this.stepForward = e}> <FaStepForward size={25}/> </span>
-					<span ref={e => this.fastForward = e}> <FaFastForward size={25}/> </span>
-				</h4>
-			</nav>
-		</header>;
-	}
-
-	componentDidMount() {
-		this.stopButton!.addEventListener('click', this.props.stopPressed, {passive : false});
-		this.stepBackward!.addEventListener('click', this.props.stepBackPressed, {passive : false});
-		this.stepForward!.addEventListener('click', this.props.stepForwardPressed, {passive : false});
-		this.fastBackward!.addEventListener('click', this.props.fastBackwardPressed, {passive : false});
-		this.fastForward!.addEventListener('click', this.props.fastForwardPressed, {passive : false});
-		this.playButton!.addEventListener('click', this.props.playPressed, {passive : false});
+				</Typography>
+			</Grid>
+			<Grid item xs={12} sm={4}>
+				<IconButton onClick={this.props.stopPressed}> <StopIcon sx={{fontSize : 40}} /> </IconButton>
+				<IconButton onClick={this.props.stepBackPressed}> <ReplayIcon sx={{fontSize : 40}} /> </IconButton>
+				<IconButton onClick={this.props.fastBackwardPressed}> <FastRewindIcon sx={{fontSize : 40}} /> </IconButton>
+				<IconButton onClick={this.props.playPressed}>
+					{this.props.simPlaying
+						? <PauseIcon sx={{fontSize : 40}} />
+						: <PlayArrowIcon sx={{fontSize : 40}} />
+					}
+				</IconButton>
+				<IconButton onClick={this.props.stepForwardPressed}> <FastForwardIcon sx={{fontSize : 40}} /> </IconButton>
+				<IconButton onClick={this.props.fastForwardPressed}> <ForwardIcon sx={{fontSize : 40}} /> </IconButton>
+			</Grid>
+		</Grid>;
 	}
 }
