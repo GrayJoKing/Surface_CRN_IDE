@@ -22,6 +22,7 @@ import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
 import InputAdornment from '@mui/material/InputAdornment';
 import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
 
 import HexagonIcon from '@mui/icons-material/Hexagon';
 import SquareIcon from '@mui/icons-material/Square';
@@ -94,7 +95,7 @@ export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappStat
 	render() {
 		return <ThemeProvider theme={theme}>
 				<CssBaseline />
-				<Grid container spacing={1}>
+				<Grid container spacing={1} sx={{"margin" : "auto", "width":"98%", "height": "98%"}}>
 					<HeaderComponent playPressed={this.playPressed.bind(this)} stepBackPressed={this.stepBackwardPressed.bind(this)} stepForwardPressed={this.stepForwardPressed.bind(this)} fastBackwardPressed={this.fastBackwardPressed.bind(this)} fastForwardPressed={this.fastForwardPressed.bind(this)} stopPressed={this.stopPressed.bind(this)} simPlaying={this.state.playing_simulation} ref={elem => this.header_component = elem}/>
 					<Grid item xs={12} sm={8}>
 						<Card sx={{"height" : "35rem"}}>
@@ -107,7 +108,7 @@ export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappStat
 									<Box style={{display:"inline"}}>
 									{ this.state.shown_tab === 0 &&
 										<Box>
-											Editing Options
+											<Typography variant="overline" sx={{"font-size": 20, "margin" : "5px"}}> Editing Options </Typography>
 											<TextField label="" size="small" variant="filled" value={this.state.editValue} onChange={this.updateSelectedCells.bind(this)} inputRef={e => this.toolbarInput = e}/>
 											<IconButton aria-label="Type" onClick={this.changeGeometry.bind(this)}>{this.state.model.geometry === "hex" ?  <HexagonIcon /> : <SquareIcon /> }</IconButton>
 											<TextField label="Random Seed" value={this.state.rngSeed} onChange={this.setRNGseed.bind(this)} size="small"/>
@@ -116,7 +117,7 @@ export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappStat
 
 									{ this.state.shown_tab === 1 &&
 										<Box>
-											Playback Options
+											<Typography variant="overline" sx={{"font-size": 20, "margin" : "5px"}}> Playback Options </Typography>
 											<TextField label="Speed" size="small" variant="filled" value={this.state.speedup_factor} onChange={this.updateSpeedUp.bind(this)} InputProps={{type : "number"}} style={{width : "10%"}}/>
 											<TextField label="FPS" size="small" variant="filled" value={this.state.fps} onChange={this.updateFPS.bind(this)} InputProps={{type : "number"}} style={{width : "10%"}}/>
 											<TextField label="Random Seed" value={this.state.shown_tab === 1 ? this.state.model.random?.seed.toString() : this.state.rngSeed} onChange={this.setRNGseed.bind(this)} disabled={this.state.shown_tab === 1} InputProps={{endAdornment:this.state.shown_tab === 1 ? <InputAdornment position="end"><Button onClick={this.copyRNGseed.bind(this)} >Set</Button></InputAdornment> : null}} size="small"/>
@@ -231,6 +232,7 @@ export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappStat
 	startSimulation() {
 		this.state.model.start_sim();
 		this.refreshSimState();
+		this.setState({rngSeed : this.state.model.random!.seed.toString()});
 	}
 
 	showSimulation() {
