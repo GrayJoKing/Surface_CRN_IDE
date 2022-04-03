@@ -29,7 +29,7 @@ export default class ColourMappingComponent extends React.Component<ColourMappin
 		return <Grid item xs={12} sm={4}>
 			<Card sx={{height : "100%"}}>
 				<CardHeader title="Colour Mapping" />
-				<Grid container item sx={{"overflow-y" : "auto", "max-height" : "28rem", height : "100%"}}>
+				<Grid container item sx={{"overflowY" : "auto", "maxHeight" : "28rem", height : "100%"}}>
 					<TransitionGroup>
 						{[...this.props.colour_map.colours.values()].map((v, i) =>
 							<Collapse>

@@ -108,20 +108,20 @@ export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappStat
 									<Box style={{display:"inline"}}>
 									{ this.state.shown_tab === 0 &&
 										<Box>
-											<Typography variant="overline" sx={{"font-size": 20, "margin" : "5px"}}> Editing Options </Typography>
+											<Typography variant="overline" sx={{"fontSize": 20, "margin" : "5px"}}> Editing Options </Typography>
 											<TextField label="" size="small" variant="filled" value={this.state.editValue} onChange={this.updateSelectedCells.bind(this)} inputRef={e => this.toolbarInput = e}/>
 											<IconButton aria-label="Type" onClick={this.changeGeometry.bind(this)}>{this.state.model.geometry === "hex" ?  <HexagonIcon /> : <SquareIcon /> }</IconButton>
 											<TextField label="Random Seed" value={this.state.rngSeed} onChange={this.setRNGseed.bind(this)} size="small"/>
-										</ Box>
+										</Box>
 									}
 
 									{ this.state.shown_tab === 1 &&
 										<Box>
-											<Typography variant="overline" sx={{"font-size": 20, "margin" : "5px"}}> Playback Options </Typography>
+											<Typography variant="overline" sx={{"fontSize": 20, "margin" : "5px"}}> Playback Options </Typography>
 											<TextField label="Speed" size="small" variant="filled" value={this.state.speedup_factor} onChange={this.updateSpeedUp.bind(this)} InputProps={{type : "number"}} style={{width : "10%"}}/>
 											<TextField label="FPS" size="small" variant="filled" value={this.state.fps} onChange={this.updateFPS.bind(this)} InputProps={{type : "number"}} style={{width : "10%"}}/>
 											<TextField label="Random Seed" value={this.state.shown_tab === 1 ? this.state.model.random?.seed.toString() : this.state.rngSeed} onChange={this.setRNGseed.bind(this)} disabled={this.state.shown_tab === 1} InputProps={{endAdornment:this.state.shown_tab === 1 ? <InputAdornment position="end"><Button onClick={this.copyRNGseed.bind(this)} >Set</Button></InputAdornment> : null}} size="small"/>
-										</ Box>
+										</Box>
 									}
 									</Box>
 								</Grid>

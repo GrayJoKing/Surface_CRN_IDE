@@ -36,7 +36,7 @@ export default class TransitionRulesComponent extends React.Component<Transition
 			<Card sx={{height : "100%"}}>
 				<CardHeader title="Transition Rules" />
 
-				<Grid container item id="colour_container" sx={{"overflow-y" : "auto", "max-height" : "20rem"}}>
+				<Grid container item id="colour_container" sx={{"overflowY" : "auto", "maxHeight" : "20rem"}}>
 					<Table size="small">
 						<TransitionGroup>
 							{this.props.rules.map((r : Transition_Rule, i : number) =>
