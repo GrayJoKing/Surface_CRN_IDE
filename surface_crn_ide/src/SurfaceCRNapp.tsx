@@ -8,7 +8,6 @@ import ColourMappingComponent from './components/ColourMappingComponent';
 import ImportExportComponent from './components/ImportExportComponent';
 import Point from './components/PointClass';
 
-//now import CSS files:
 import "@fontsource/roboto/300.css";
 import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
@@ -19,6 +18,14 @@ import Grid from "@mui/material/Grid";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import Card from "@mui/material/Card";
+import TextField from "@mui/material/TextField";
+import Box from "@mui/material/Box";
+import InputAdornment from '@mui/material/InputAdornment';
+import Button from "@mui/material/Button";
+
+import HexagonIcon from '@mui/icons-material/Hexagon';
+import SquareIcon from '@mui/icons-material/Square';
+import IconButton from "@mui/material/IconButton";
 
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 const theme = createTheme({
@@ -39,16 +46,17 @@ interface SurfaceCRNappState {
 
 	model : Surface_CRN
 	sim_size : number
-	sim_time : number
 	geometry : "hex" | "square"
 	colour_map : Colour_Map
 	rules : Transition_Rule[]
 
 	playing_simulation : boolean
-	sim_started : boolean
 
 	editValue : string
 	selectedCells : Point[]
+	rngSeed : string
+	fps : number
+	speedup_factor : number
 }
 
 export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappState> {
@@ -63,22 +71,23 @@ export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappStat
 
 	constructor(_ : {}) {
 		super(_);
-		let model = new Surface_CRN({geometry : "square", initial_state : Array.from({length:5}, () => (Array.from({length:5}, () => 'I')))});
+		let model = new Surface_CRN({geometry : "square", initial_state : Array.from({length:20}, () => (Array.from({length:20}, () => 'I')))});
 		this.state = {
 			shown_tab : 0,
 
 			model : model,
 			sim_size : model.pixels_per_node,
-			sim_time : 0,
 			geometry : model.geometry,
 			colour_map : model.colour_map,
 			rules : model.rules,
 
 			playing_simulation : false,
-			sim_started : false,
 
 			editValue : "",
-			selectedCells : []
+			selectedCells : [],
+			rngSeed : (model.rng_seed || "").toString(),
+			fps : model.fps,
+			speedup_factor : model.speedup_factor
 		};
 	}
 
@@ -88,25 +97,40 @@ export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappStat
 				<Grid container spacing={1}>
 					<HeaderComponent playPressed={this.playPressed.bind(this)} stepBackPressed={this.stepBackwardPressed.bind(this)} stepForwardPressed={this.stepForwardPressed.bind(this)} fastBackwardPressed={this.fastBackwardPressed.bind(this)} fastForwardPressed={this.fastForwardPressed.bind(this)} stopPressed={this.stopPressed.bind(this)} simPlaying={this.state.playing_simulation} ref={elem => this.header_component = elem}/>
 					<Grid item xs={12} sm={8}>
-						<Card sx={{"height" : "28rem"}}>
+						<Card sx={{"height" : "35rem"}}>
 							<Grid container sx={{height : "100%"}}>
 								<Grid item xs={12} sx={{height : "20%"}}>
 									<Tabs value={this.state.shown_tab} onChange={this.onTabSelect.bind(this)}>
 										<Tab label="Initial State"></Tab>
 										<Tab label="Simulator"></Tab>
 									</Tabs>
-									<div style={{display:"inline"}}>
-										<input type={"text"} value={this.state.editValue} onChange={this.updateSelectedCells.bind(this)} ref={e => this.toolbarInput = e}></input>
-										<button onClick={this.changeGeometry.bind(this)}>{this.state.model.geometry === "hex" ? "Square" : "Hex"}</button>
-									</div>
+									<Box style={{display:"inline"}}>
+									{ this.state.shown_tab === 0 &&
+										<Box>
+											Editing Options
+											<TextField label="" size="small" variant="filled" value={this.state.editValue} onChange={this.updateSelectedCells.bind(this)} inputRef={e => this.toolbarInput = e}/>
+											<IconButton aria-label="Type" onClick={this.changeGeometry.bind(this)}>{this.state.model.geometry === "hex" ?  <HexagonIcon /> : <SquareIcon /> }</IconButton>
+											<TextField label="Random Seed" value={this.state.rngSeed} onChange={this.setRNGseed.bind(this)} size="small"/>
+										</ Box>
+									}
+
+									{ this.state.shown_tab === 1 &&
+										<Box>
+											Playback Options
+											<TextField label="Speed" size="small" variant="filled" value={this.state.speedup_factor} onChange={this.updateSpeedUp.bind(this)} InputProps={{type : "number"}} style={{width : "10%"}}/>
+											<TextField label="FPS" size="small" variant="filled" value={this.state.fps} onChange={this.updateFPS.bind(this)} InputProps={{type : "number"}} style={{width : "10%"}}/>
+											<TextField label="Random Seed" value={this.state.shown_tab === 1 ? this.state.model.random?.seed.toString() : this.state.rngSeed} onChange={this.setRNGseed.bind(this)} disabled={this.state.shown_tab === 1} InputProps={{endAdornment:this.state.shown_tab === 1 ? <InputAdornment position="end"><Button onClick={this.copyRNGseed.bind(this)} >Set</Button></InputAdornment> : null}} size="small"/>
+										</ Box>
+									}
+									</Box>
 								</Grid>
 
 								<Grid item xs={12} sx={{height : "80%"}}>
 									{this.state.shown_tab === 0 &&
-										<GridDisplayComponent current_state={this.state.model.initial_state} colour_map={this.state.colour_map} geometry={this.state.geometry} ref={elem => this.initial_state_component = elem} size={this.state.sim_size} zoom={this.zoom.bind(this)} sim_time={null} selectedCells={this.selectedCells.bind(this)}/>
+										<GridDisplayComponent current_state={this.state.model.initial_state} model={this.state.model} geometry={this.state.geometry} ref={elem => this.initial_state_component = elem} size={this.state.sim_size} zoom={this.zoom.bind(this)} selectedCells={this.selectedCells.bind(this)}/>
 									}
 									{this.state.shown_tab === 1 &&
-										<GridDisplayComponent current_state={this.state.sim_started ? this.state.model.current_state : this.state.model.initial_state} colour_map={this.state.colour_map} geometry={this.state.geometry} ref={elem => this.simulator_component = elem} size={this.state.sim_size} zoom={this.zoom.bind(this)} sim_time={this.state.sim_time} selectedCells={this.selectedCells.bind(this)}/>
+										<GridDisplayComponent current_state={this.state.model.sim_started() ? this.state.model.current_state : this.state.model.initial_state} model={this.state.model} geometry={this.state.geometry} ref={elem => this.simulator_component = elem} size={this.state.sim_size} zoom={this.zoom.bind(this)} selectedCells={this.selectedCells.bind(this)} simulation/>
 									}
 								</Grid>
 							</Grid>
@@ -165,8 +189,7 @@ export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappStat
 	}
 
 	update_page(new_model : Surface_CRN) {
-		this.setState({shown_tab : 0, playing_simulation : false, model : new_model, geometry : new_model.geometry, sim_size : new_model.pixels_per_node, sim_time : 0, colour_map : new_model.colour_map, rules : [...new_model.rules]});
-		//this.refreshInitState();
+		this.setState({shown_tab : 0, playing_simulation : false, model : new_model, geometry : new_model.geometry, sim_size : new_model.pixels_per_node, colour_map : new_model.colour_map, rules : [...new_model.rules], editValue : "", selectedCells : [], rngSeed : (new_model.rng_seed || "").toString(), fps : new_model.fps, speedup_factor : new_model.speedup_factor});
 	}
 
 	changeGeometry() {
@@ -196,21 +219,9 @@ export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappStat
 		const sim = this.simulator_component;
 		const model = this.state.model;
 		if (sim !== null) {
-			this.setState({sim_time : model.sim_time});
-			sim.setState({colour_map: model.colour_map, size: model.pixels_per_node, data : sim.createData(model.sim_started() ? model.current_state : model.initial_state)});
+			sim.setState({colour_map: model.colour_map, size: model.pixels_per_node, data : sim.createData(model.sim_started() ? model.current_state : model.initial_state), sim_time : model.sim_time});
 		}
 	}
-
-/*
-	updateInitState(x : number, y : number, s : string) {
-		this.state.model.set_cell(x, y, s);
-		this.refreshInitState();
-	}
-	updateSimState(x : number, y : number, s : string) {
-		this.state.model.current_state[x][y] = s;
-		this.refreshSimState();
-	}
-*/
 
 	refreshColour() {
 		this.refreshInitState();
@@ -220,12 +231,10 @@ export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappStat
 	startSimulation() {
 		this.state.model.start_sim();
 		this.refreshSimState();
-		this.setState({sim_started : true});
-		console.log('sim started');
 	}
 
 	showSimulation() {
-		this.setState({shown_tab : 1})
+		if (this.state.shown_tab !== 1) this.setState({shown_tab : 1})
 		if (!this.state.model.sim_started()) {
 			this.startSimulation();
 		}
@@ -263,49 +272,35 @@ export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappStat
 	stepForwardPressed(e : PointerEvent) {
 		e.preventDefault();
 		this.showSimulation();
-		if (!this.state.model.step_forward()) {
-			console.log('sim finished');
-		}
+		this.state.model.step_forward()
 		this.refreshSimState();
-		console.log('step forward');
 	}
 
 	stepBackwardPressed(e : PointerEvent) {
 		e.preventDefault();
 		this.showSimulation();
-		if (!this.state.model.step_backward()) {
-			console.log('sim start');
-		}
+		this.state.model.step_backward();
 		this.refreshSimState();
-		console.log('step backward');
 	}
 
 	fastForwardPressed(e : PointerEvent) {
 		e.preventDefault();
 		this.showSimulation();
-		if (!this.state.model.next_frame()) {
-			console.log('sim finished');
-		}
+		this.state.model.next_frame();
 		this.refreshSimState();
-		console.log('fast forward');
 	}
 
 	fastBackwardPressed(e : PointerEvent) {
 		e.preventDefault();
 		this.showSimulation();
-		if (!this.state.model.prev_frame()) {
-			console.log('sim start');
-		}
+		this.state.model.prev_frame();
 		this.refreshSimState();
-		console.log('fast backward');
 	}
 
 	stopPressed(e : PointerEvent) {
 		e.preventDefault();
 		this.setPlaying(false);
-		//this.model_tabs!.setState({selectedIndex : 0});
 		this.state.model.stop_sim();
-		this.setState({sim_started : false});
 		this.refreshSimState();
 	}
 
@@ -336,23 +331,50 @@ export default class SurfaceCRNapp extends React.Component<{}, SurfaceCRNappStat
 		if (out) this.state.model.increase_size();
 		else this.state.model.decrease_size();
 		this.setState({sim_size : this.state.model.pixels_per_node});
-		this.refreshSimState();
-		this.refreshInitState();
 		return oldZoom/this.state.model.pixels_per_node;
 	}
 
 	selectedCells(selected : Point[], value : string) {
 		this.setState({selectedCells : selected, editValue : value});
-		this.toolbarInput!.focus();
+		this.toolbarInput && this.toolbarInput.focus();
 	}
 
 	updateSelectedCells(e : React.ChangeEvent<HTMLInputElement>) {
 		if (e.target.value.match(/^\w*$/)) {
 			this.setState({editValue : e.target.value});
-			for (let p of this.state.selectedCells) {
-				this.state.model.set_cell(p.x, p.y, e.target.value);
-			}
+			this.state.model.set_cells(this.state.selectedCells.map(p => [p.x, p.y]), e.target.value);
 			this.refreshInitState();
 		}
+	}
+
+	setRNGseed(e : React.ChangeEvent<HTMLInputElement>) {
+		let n = e.target.value;
+		if (n === '') {
+			this.setState({rngSeed : n});
+			this.state.model.rng_seed = null;
+		} else {
+			let x = parseInt(n);
+			this.setState({rngSeed : n});
+			this.state.model.rng_seed = x;
+		}
+	}
+
+	copyRNGseed() {
+		this.state.model.rng_seed = this.state.model.random!.seed;
+		this.setState({rngSeed : this.state.model.rng_seed.toString()});
+	}
+
+	updateFPS(e : React.ChangeEvent<HTMLInputElement>) {
+		let n = e.target.value;
+		let x = parseFloat(n);
+		this.setState({fps : x});
+		this.state.model.fps = x;
+	}
+
+	updateSpeedUp(e : React.ChangeEvent<HTMLInputElement>) {
+		let n = e.target.value;
+		let x = parseFloat(n);
+		this.setState({speedup_factor : x});
+		this.state.model.speedup_factor = x;
 	}
 }

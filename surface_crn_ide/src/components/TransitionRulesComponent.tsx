@@ -29,34 +29,22 @@ interface TransitionRulesProps {
 
 export default class TransitionRulesComponent extends React.Component<TransitionRulesProps, {}> {
 
-	constructor(props : TransitionRulesProps) {
-		super(props);
-	}
-
 	render() {
 		// TODO: figure out better way of unique indexing
 
 		return <Grid item xs={12} sm={8}>
-			<Card>
+			<Card sx={{height : "100%"}}>
 				<CardHeader title="Transition Rules" />
 
 				<Grid container item id="colour_container" sx={{"overflow-y" : "auto", "max-height" : "20rem"}}>
-					<Table>
-						<TableHead>
-							<TableRow>
-								<TableCell>Rate</TableCell>
-								<TableCell align="center">Reactant</TableCell>
-								<TableCell></TableCell>
-								<TableCell align="center">Reactant</TableCell>
-								<TableCell></TableCell>
-								<TableCell align="center">Product</TableCell>
-								<TableCell></TableCell>
-								<TableCell align="center">Product</TableCell>
-							</TableRow>
-						</TableHead>
-						<TableBody>
-							{this.props.rules.map((r : Transition_Rule, i : number) => <RuleRowComponent key={r.toString() + i.toString()} rule={r} deleteRule={() => this.props.deleteRule(r)} />)}
-						</TableBody>
+					<Table size="small">
+						<TransitionGroup>
+							{this.props.rules.map((r : Transition_Rule, i : number) =>
+								<Collapse>
+									<RuleRowComponent key={r.toString() + i.toString()} rule={r} deleteRule={() => this.props.deleteRule(r)} />
+								</Collapse>
+							)}
+						</TransitionGroup>
 					</Table>
 				</Grid>
 
@@ -76,7 +64,7 @@ interface RuleRowState {
 	product1 : string,
 	rate : number,
 }
-// TODO: Handle mono transitions properly (in here and in model)
+// TODO: Handle mono transitions properly
 class RuleRowComponent extends React.Component<{rule: Transition_Rule, deleteRule : React.MouseEventHandler<Element>}, RuleRowState> {
 	rule : Transition_Rule;
 	deleteRule : React.MouseEventHandler<Element>;
@@ -98,8 +86,8 @@ class RuleRowComponent extends React.Component<{rule: Transition_Rule, deleteRul
 		// TODO: gray out mono'd rules
 		// TODO: make invalid rules red
 
-		return <TableRow >
-			<TableCell> <TextField variant="filled" type="number" value={this.state.rate} onChange={this.updateRule.bind(this)} inputProps={{ inputMode: 'numeric', step : 0.1, pattern: '[0-9]+(\.[0-9]+)?', className : "rulesRate", min : 0, style: {"padding" : "5px"}}} /> </TableCell>
+		return <TableRow hover>
+			<TableCell> <TextField variant="filled" type="number" value={this.state.rate} onChange={this.updateRule.bind(this)} style={{width : "5rem"}}inputProps={{ inputMode: 'numeric', step : 0.1, pattern: '[0-9]+(\\.[0-9]+)?', className : "rulesRate", min : 0, style: {"padding" : "5px"}}} /> </TableCell>
 			<TableCell padding="none"> <TextField variant="filled" value={this.state.reactant0} onChange={this.updateRule.bind(this)} inputProps={{className:"rulesReactant0", style: {"padding" : "5px"}}}/> </TableCell>
 			<TableCell padding="none" align="center"> <AddIcon /> </TableCell>
 			<TableCell padding="none" align="center"> <TextField variant="filled" value={this.state.reactant1} className="rulesReactant1" onChange={this.updateRule.bind(this)} inputProps={{className:"rulesReactant1", style: {"padding" : "5px"}}}/> </TableCell>

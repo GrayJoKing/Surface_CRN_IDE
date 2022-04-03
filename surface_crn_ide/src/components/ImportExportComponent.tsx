@@ -47,7 +47,7 @@ export class ImportExportComponent extends React.Component<ImportProps, ImportSt
 		]
 
 		return <Grid item xs={12} sm={4}>
-				<Card>
+				<Card sx={{height : "100%"}}>
 					<CardHeader title="Import/Export" />
 
 					<Grid container>
@@ -62,7 +62,7 @@ export class ImportExportComponent extends React.Component<ImportProps, ImportSt
 						<Grid item xs={12} sm={4}>
 							<Button variant="contained" disabled={this.state.example_selected === ""} type="submit" id="import_example" onClick={() => this.props.import_example(this.state.example_selected)}> Import </Button>
 						</Grid>
-						</Grid>
+					</Grid>
 
 					<CardActions>
 						<Button variant="contained" component="label">

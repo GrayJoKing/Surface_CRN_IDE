@@ -13,14 +13,27 @@ export default class Colour_Map {
 		return !!([...c.colours].filter(a => !this.colours.has(a)) || [...this.colours].filter(a => !c.colours.has(a)));
 	}
 
+	cache : Map<string, Colour> = new Map();
 	public find_colour(s : string) : Colour | null {
-		for (let c of this.colours) {
-			if ([...c.species.values()].some((s1 : Species_Matcher) => s1.includes(s))) {
-				return c;
+		let r = this.cache.get(s);
+		if (r === undefined) {
+			for (let c of this.colours) {
+				if ([...c.species.values()].some((s1 : Species_Matcher) => s1.includes(s))) {
+					r = c;
+					break;
+				}
+			}
+			if (r === undefined) {
+				r = this.temp_colours.get(s);
+				if (r === undefined) {
+					r = this.new_colour();
+					if (r === undefined) r = new Colour("#FFFFFF");
+					this.add_temp(s, r);
+					this.cache.set(s, r);
+				}
 			}
 		}
-		let b = this.temp_colours.get(s);
-		return b === undefined ? null : b;
+		return r;
 	}
 
 	public export() {
@@ -32,6 +45,7 @@ export default class Colour_Map {
 	temp_colours : Map<string, Colour> = new Map<string, Colour>();
 
 	public new_colour() : Colour {
+		this.cache.clear();
 		let c = this.example_colours.find((a : Colour) => {
 			if ([...this.temp_colours.values(), ...this.colours.values()].find((c : Colour) => c.hex() === a.hex()) !== undefined) return false;
 			return true;
@@ -44,16 +58,20 @@ export default class Colour_Map {
 	}
 
 	public add(c : Colour) {
+		this.cache.clear();
 		this.colours.add(c);
 	}
 	public delete(c : Colour) {
+		this.cache.clear();
 		this.colours.delete(c);
 	}
 
 	public add_temp(s : string, c : Colour) {
+		this.cache.clear();
 		this.temp_colours.set(s, c);
 	}
 	public clear_temp() {
+		this.cache.clear();
 		this.temp_colours.clear();
 	}
 }

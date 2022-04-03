@@ -38,8 +38,8 @@ export default class HeaderComponent extends React.Component<HeaderProps, {}> {
 			</Grid>
 			<Grid item xs={12} sm={4}>
 				<IconButton onClick={this.props.stopPressed}> <StopIcon sx={{fontSize : 40}} /> </IconButton>
-				<IconButton onClick={this.props.stepBackPressed}> <ReplayIcon sx={{fontSize : 40}} /> </IconButton>
-				<IconButton onClick={this.props.fastBackwardPressed}> <FastRewindIcon sx={{fontSize : 40}} /> </IconButton>
+				<IconButton onClick={this.props.fastBackwardPressed}> <ReplayIcon sx={{fontSize : 40}} /> </IconButton>
+				<IconButton onClick={this.props.stepBackPressed}> <FastRewindIcon sx={{fontSize : 40}} /> </IconButton>
 				<IconButton onClick={this.props.playPressed}>
 					{this.props.simPlaying
 						? <PauseIcon sx={{fontSize : 40}} />

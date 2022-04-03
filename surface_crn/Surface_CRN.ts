@@ -23,9 +23,9 @@ export default class Surface_CRN {
 	colour_map : Colour_Map = new Colour_Map();
 	options : Map<string, string> = new Map();
 	geometry : 'square'|'hex' = 'square';
-	rng_seed : number | null = null;
+	rng_seed : bigint | number | null = null;
 	pixels_per_node : number = 20;
-	speedup_factor : number = 0.5;
+	speedup_factor : number = 1;
 	fps : number = 30;
 
 	random : MersenneTwister | null = null;
@@ -44,9 +44,37 @@ export default class Surface_CRN {
 		this.rules.push(Transition_Rule.blankRule());
 	}
 
-	set_cell(x : number, y : number, val : string) {
-		this.initial_state[y][x] = val;
-		// TODO: add on new rows/columns
+	set_cells(coords : [number, number][], val : string) {
+		if (coords.length === 0) return;
+		let xS = coords.map(x => x[0]).sort();
+		let minX = xS[0];
+		let maxX = xS[xS.length-1];
+		if (minX < 0) {
+			for (let i of this.initial_state) {
+				i.unshift(...Array(-minX).fill(''));
+			}
+			maxX -= minX;
+		}
+		let width = this.initial_state[0].length
+		if (maxX >= width) {
+			for (let i of this.initial_state) {
+				i.push(...Array(maxX-width+1).fill(''));
+			}
+		}
+
+		let yS = coords.map(x => x[1]).sort();
+		let minY = yS[0];
+		let maxY = yS[yS.length-1];
+		if (minY < 0) {
+			this.initial_state.unshift(...Array(-minY).map(_ => Array(this.initial_state[0].length).fill('')));
+			maxY -= minY;
+		}
+		if (maxY >= this.initial_state.length) {
+			this.initial_state.push(...Array(maxY-this.initial_state.length+1).fill('').map(_ => Array(this.initial_state[0].length).fill('')));
+		}
+		for (let [x,y] of coords) {
+			this.initial_state[y][x] = val;
+		}
 	}
 
 	set_option(key : string, value : string) {
@@ -59,7 +87,7 @@ export default class Surface_CRN {
 				}
 				break;
 			case "rng_seed":
-				var i = parseFloat(value);
+				var i = parseInt(value);
 				this.rng_seed = i;
 				break;
 			case "pixels_per_node":
@@ -130,6 +158,7 @@ export default class Surface_CRN {
 			this.random = new MersenneTwister(this.rng_seed);
 		} else {
 			this.random = new MersenneTwister();
+			this.random = new MersenneTwister(this.random.bigInt());
 		}
 		this.sim_queue = new PriorityQueue<Transition_State>({comparator : (a,b) => a.execution_time-b.execution_time});
 
@@ -221,7 +250,6 @@ export default class Surface_CRN {
 				});
 			}
 			this.sim_history.push(t);
-			//console.log(...t.old_cells, '=>', ...t.new_cells);
 			return this.sim_queue!.length != 0;
 		} else {
 			return false;

@@ -1,21 +1,22 @@
 import React from 'react';
-import {Colour_Map, Colour} from 'surface_crn';
+import Surface_CRN, {Colour} from 'surface_crn';
 import Point from './PointClass';
 
 interface GridDisplayProps {
 	current_state : string[][]
-	colour_map : Colour_Map
+	model : Surface_CRN
 	geometry : 'square'|'hex'
 	size : number
 	zoom : (b : boolean) => number
 	selectedCells : (s : Point[], val : string) => void
-	sim_time : null | number
+	simulation? : boolean
 }
 
 interface GridDisplayState extends React.ComponentState {
-	data: string[][]
+	data: [string, Colour][][]
 	offset : Point
 	selected_cells : Point[]
+	sim_time : number | null
 }
 
 class GridDisplayComponent extends React.Component<GridDisplayProps, GridDisplayState> {
@@ -30,18 +31,13 @@ class GridDisplayComponent extends React.Component<GridDisplayProps, GridDisplay
 		this.state = {
 			data : this.createData(props.current_state),
 			offset : Point.origin,
-			selected_cells : []
+			selected_cells : [],
+			sim_time : props.simulation ? 0 : null
 		};
 	}
 
 	render() {
-		//console.log('rendAll');
-		// TODO: figure out where to clear the temp colours
-		//this.props.colour_map.clear_temp();
-		// TODO: render "Initial State" and other information over canvas
-		return <canvas
-					ref={elem => this.canvas = elem}
-				/>
+		return <canvas ref={elem => this.canvas = elem} />
 	}
 
 	componentDidMount() {
@@ -57,7 +53,6 @@ class GridDisplayComponent extends React.Component<GridDisplayProps, GridDisplay
 	}
 
 	hexCoord(xcoord : number, ycoord : number) {
-
 		let gridHeight = (0.75+0.375)*this.props.size;
 		let gridWidth = this.props.size * Math.sin(2 * Math.PI/6)*2*0.75;
 		let c = (0.75-0.375)*this.props.size;
@@ -101,22 +96,6 @@ class GridDisplayComponent extends React.Component<GridDisplayProps, GridDisplay
 					if (this.props.geometry === "square") {
 						this.setState({selected_cells : [new Point(Math.floor(xcoord/this.props.size), Math.floor(ycoord/this.props.size))]});
 					} else if (this.props.geometry === "hex") {
-
-						/*
-						// Some debugging for hitboxes
-						let canvasRender = this.canvas!.getContext("2d");
-						if (canvasRender === null || !(canvasRender instanceof CanvasRenderingContext2D)) return;
-						const ctx : CanvasRenderingContext2D = canvasRender;
-
-						for (let a = xcoord - 200; a < xcoord + 200; a+=1) {
-							for (let b = ycoord - 200; b < ycoord + 200; b+=1) {
-								let [column, row] = this.hexCoord(a, b);
-								ctx.fillStyle = "rgb(" + (((column*40)%256+256)%256) + "," + (((row*40)%256+256)%256) + ",0)";
-								ctx.fillRect(a, b, 1, 1);
-							}
-						}
-						*/
-
 						let [column, row] = this.hexCoord(xcoord, ycoord);
 						this.setState({selected_cells : [new Point(Math.floor(column), Math.floor(row))]});
 					}
@@ -155,45 +134,44 @@ class GridDisplayComponent extends React.Component<GridDisplayProps, GridDisplay
 	}
 
 	componentDidUpdate(prevProps : GridDisplayProps, prevState : GridDisplayState) {
-		if (prevProps.geometry !== this.props.geometry
+		if (prevProps.model !== this.props.model
+		|| prevProps.geometry !== this.props.geometry
 		|| !prevState.offset.equals(this.state.offset)
 		|| prevProps.size !== this.props.size
-		|| !prevProps.colour_map.equals(this.props.colour_map)
-		|| (prevProps.sim_time !== null && prevProps.sim_time > 0 && this.props.sim_time === 0)) {
+		|| (prevState.sim_time !== null && prevState.sim_time > 0 && this.state.sim_time === 0)) {
 			this.draw();
 			return;
 		}
-		if (prevProps !== this.props) console.log("updating props");
-		if (prevState !== this.state) console.log("updating state");
 
 		if (prevProps.current_state !== this.props.current_state) {
 			this.setState({data : this.createData(this.props.current_state)});
 		}
-		if (prevState.selected_cells !== this.state.selected_cells) {
-			let val : string | null = this.state.selected_cells.length < 1 ? "" : null;
-			for (let i of this.state.selected_cells) {
-				let r = this.state.data?.[i.y]?.[i.x] || "";
-				if (val === null) val = r;
-				if (val !== r) val = "";
-			}
-			this.props.selectedCells(this.state.selected_cells, val!);
-		}
 
-		let canvasRender = this.canvas!.getContext("2d");
-		if (canvasRender === null || !(canvasRender instanceof CanvasRenderingContext2D)) return;
-		const ctx : CanvasRenderingContext2D = canvasRender;
-		if (prevState.data !== this.state.data) {
-			let count = 0;
-			for (let [y, row] of this.state.data.entries()) {
-				for (let [x, val] of row.entries()) {
-					if (prevState.data?.[y]?.[x] !== val) {
-						this.drawCell(ctx, x, y, val) && count++;
+		if (prevState !== this.state) {
+			if (prevState.selected_cells !== this.state.selected_cells) {
+				let val : string | null = this.state.selected_cells.length < 1 ? "" : null;
+				for (let i of this.state.selected_cells) {
+					let r = (this.state.data?.[i.y]?.[i.x] || [""])[0];
+					if (val === null) val = r;
+					if (val !== r) val = "";
+				}
+				this.props.selectedCells(this.state.selected_cells, val!);
+			}
+
+			let canvasRender = this.canvas!.getContext("2d");
+			if (canvasRender === null || !(canvasRender instanceof CanvasRenderingContext2D)) return;
+			const ctx : CanvasRenderingContext2D = canvasRender;
+			if (prevState.data !== this.state.data) {
+				let count = 0;
+				for (let [y, row] of this.state.data.entries()) {
+					for (let [x, val] of row.entries()) {
+						let d = prevState.data?.[y]?.[x];
+						if (d === undefined || d[0] !== val[0] || d[1].hex() !== val[1].hex()) {
+							this.drawCell(ctx, x, y, val) && count++;
+						}
 					}
 				}
 			}
-			console.log("updating", count, "cells");
-		}
-		if (prevState.selected_cells !== this.state.selected_cells || prevProps.sim_time !== this.props.sim_time) {
 			this.addExtraDetail(ctx, prevState);
 		}
 	}
@@ -214,7 +192,6 @@ class GridDisplayComponent extends React.Component<GridDisplayProps, GridDisplay
 	}
 
 	draw() {
-		console.log("Rendering");
 		if (this.canvas === null) return;
 		const rect = (this.canvas.parentNode! as Element).getBoundingClientRect();
 		this.canvas.width = Math.floor(rect.width * window.devicePixelRatio);
@@ -228,7 +205,8 @@ class GridDisplayComponent extends React.Component<GridDisplayProps, GridDisplay
 		ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
 		ctx.translate(this.state.offset.x, this.state.offset.y);
 
-		for (let [y, row] of this.state.data.entries()) {
+		let data = this.createData(this.props.current_state);
+		for (let [y, row] of data.entries()) {
 			for (let [x, val] of row.entries()) {
 				this.drawCell(ctx, x, y, val);
 			}
@@ -238,7 +216,7 @@ class GridDisplayComponent extends React.Component<GridDisplayProps, GridDisplay
 
 	addExtraDetail(ctx : CanvasRenderingContext2D, prevState? : GridDisplayState) {
 
-		if (this.props.sim_time !== null) {
+		if (this.state.sim_time !== null) {
 			ctx.fillStyle = "#FFFFFF";
 			let xcoord = ctx.canvas.width/window.devicePixelRatio - 80 - this.state.offset.x;
 			let ycoord = ctx.canvas.height/window.devicePixelRatio - 30 - this.state.offset.y;
@@ -248,9 +226,8 @@ class GridDisplayComponent extends React.Component<GridDisplayProps, GridDisplay
 			ctx.textAlign = 'left';
 			ctx.textBaseline = 'middle';
 			ctx.font = "15px Arial";
-			ctx.fillText("T: "+this.props.sim_time.toFixed(2), xcoord + 4, ycoord + 15, 80);
+			ctx.fillText("T: "+this.state.sim_time.toFixed(2), xcoord + 4, ycoord + 15, 80);
 		}
-
 		for (let z of [prevState, this.state]) {
 			if (z !== undefined) {
 				for (let p of z.selected_cells) {
@@ -283,11 +260,17 @@ class GridDisplayComponent extends React.Component<GridDisplayProps, GridDisplay
 	}
 
 	createData(current_state : string[][]) {
-		var data : string[][] = [];
+		this.props.model.colour_map.clear_temp();
+		var data : [string, Colour][][] = [];
 		for (var [y, row] of current_state.entries()) {
 			data[y] = [];
 			for (var [x, elem] of row.entries()) {
-				data[y][x] = elem;
+				let colour = this.props.model.colour_map.find_colour(elem);
+				if (colour == null) {
+					colour = this.props.model.colour_map.new_colour();
+					this.props.model.colour_map.add_temp(elem, colour);
+				}
+				data[y][x] = [elem, colour];
 			}
 		}
 		return data;
@@ -295,11 +278,10 @@ class GridDisplayComponent extends React.Component<GridDisplayProps, GridDisplay
 
 	updateData(current_state : string[][]) {
 		var data = this.createData(current_state);
-		console.log("Updating Data");
 		this.setState({data : data});
 	}
 
-	drawCell(ctx : CanvasRenderingContext2D, x : number, y : number, val : string | undefined) {
+	drawCell(ctx : CanvasRenderingContext2D, x : number, y : number, val : [string, Colour] | undefined) {
 		let coord : Point;
 		if (this.props.geometry === "square") {
 			coord = new Point((x+0.5)*this.props.size, (y+0.5)*this.props.size);
@@ -313,16 +295,10 @@ class GridDisplayComponent extends React.Component<GridDisplayProps, GridDisplay
 		if (coord.x + this.props.size + this.state.offset.x < 0 || coord.y + this.props.size + this.state.offset.y < 0) return false;
 		// if (this.props.size < 1 && (this.props.size*coord.x % 1 < this.props.size || this.props.size*coord.y % 1 < this.props.size)) return false
 
-		let colour : Colour | null = null;
 		if (val === undefined) {
 			ctx.fillStyle = 'rgba(0,0,0,0)';
 		} else {
-			colour = this.props.colour_map.find_colour(val);
-			if (colour == null) {
-				colour = this.props.colour_map.new_colour();
-				this.props.colour_map.add_temp(val, colour);
-			}
-			ctx.fillStyle = 'rgb(' + colour.rgb().join(',') + ')';
+			ctx.fillStyle = 'rgb(' + val[1].rgb().join(',') + ')';
 			ctx.strokeStyle = ctx.fillStyle;
 		}
 
@@ -345,12 +321,12 @@ class GridDisplayComponent extends React.Component<GridDisplayProps, GridDisplay
 
 		if (this.props.size >= 12) {
 			if (val !== undefined) {
-				let [r,g,b] = colour!.rgb();
+				let [r,g,b] = val[1].rgb();
 				ctx.fillStyle = (r * 0.299 + g * 0.587 + b * 0.114) > 186 ? 'black' : 'white';
 				ctx.textAlign = 'center';
 				ctx.textBaseline = 'middle';
 				ctx.font = "11px Arial";
-				ctx.fillText(val, coord.x, coord.y, this.props.size);
+				ctx.fillText(val[0], coord.x, coord.y, this.props.size);
 			}
 		}
 		return true;

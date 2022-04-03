@@ -100,8 +100,7 @@ export function parse_code(data:string[]) : Surface_CRN {
 export async function parse_import_files(input_files: File[]):Promise<Surface_CRN|false> {
 
 	if (!input_files) {
-		//show error
-		console.log("No input files")
+		//TODO: show error
 		return false;
 	}
 
