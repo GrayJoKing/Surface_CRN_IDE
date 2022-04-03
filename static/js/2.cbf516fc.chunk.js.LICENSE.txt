@@ -4,6 +4,45 @@ object-assign
 @license MIT
 */
 
+/*!
+ * XRegExp 5.1.0
+ * <xregexp.com>
+ * Steven Levithan (c) 2007-present MIT License
+ */
+
+/*!
+ * XRegExp Unicode Base 5.1.0
+ * <xregexp.com>
+ * Steven Levithan (c) 2008-present MIT License
+ */
+
+/*!
+ * XRegExp Unicode Categories 5.1.0
+ * <xregexp.com>
+ * Steven Levithan (c) 2010-present MIT License
+ * Unicode data by Mathias Bynens <mathiasbynens.be>
+ */
+
+/*!
+ * XRegExp Unicode Properties 5.1.0
+ * <xregexp.com>
+ * Steven Levithan (c) 2012-present MIT License
+ * Unicode data by Mathias Bynens <mathiasbynens.be>
+ */
+
+/*!
+ * XRegExp Unicode Scripts 5.1.0
+ * <xregexp.com>
+ * Steven Levithan (c) 2010-present MIT License
+ * Unicode data by Mathias Bynens <mathiasbynens.be>
+ */
+
+/** @license MUI v5.4.4
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 /** @license React v0.20.2
  * scheduler.production.min.js
  *
@@ -24,6 +63,15 @@ object-assign
 
 /** @license React v17.0.2
  * react-dom.production.min.js
+ *
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+/** @license React v17.0.2
+ * react-is.production.min.js
  *
  * Copyright (c) Facebook, Inc. and its affiliates.
  *

@@ -1,23 +1,27 @@
 {
   "files": {
-    "main.css": "/Surface_CRN_IDE/static/css/main.aef73dd5.chunk.css",
-    "main.js": "/Surface_CRN_IDE/static/js/main.ed4e795b.chunk.js",
-    "main.js.map": "/Surface_CRN_IDE/static/js/main.ed4e795b.chunk.js.map",
+    "main.css": "/Surface_CRN_IDE/static/css/main.8150fe91.chunk.css",
+    "main.js": "/Surface_CRN_IDE/static/js/main.ec7b4442.chunk.js",
+    "main.js.map": "/Surface_CRN_IDE/static/js/main.ec7b4442.chunk.js.map",
     "runtime-main.js": "/Surface_CRN_IDE/static/js/runtime-main.aac5a0d9.js",
     "runtime-main.js.map": "/Surface_CRN_IDE/static/js/runtime-main.aac5a0d9.js.map",
-    "static/css/2.27175f2b.chunk.css": "/Surface_CRN_IDE/static/css/2.27175f2b.chunk.css",
-    "static/js/2.7f723336.chunk.js": "/Surface_CRN_IDE/static/js/2.7f723336.chunk.js",
-    "static/js/2.7f723336.chunk.js.map": "/Surface_CRN_IDE/static/js/2.7f723336.chunk.js.map",
+    "static/css/2.0ac28dbd.chunk.css": "/Surface_CRN_IDE/static/css/2.0ac28dbd.chunk.css",
+    "static/js/2.cbf516fc.chunk.js": "/Surface_CRN_IDE/static/js/2.cbf516fc.chunk.js",
+    "static/js/2.cbf516fc.chunk.js.map": "/Surface_CRN_IDE/static/js/2.cbf516fc.chunk.js.map",
     "index.html": "/Surface_CRN_IDE/index.html",
-    "static/css/2.27175f2b.chunk.css.map": "/Surface_CRN_IDE/static/css/2.27175f2b.chunk.css.map",
-    "static/css/main.aef73dd5.chunk.css.map": "/Surface_CRN_IDE/static/css/main.aef73dd5.chunk.css.map",
-    "static/js/2.7f723336.chunk.js.LICENSE.txt": "/Surface_CRN_IDE/static/js/2.7f723336.chunk.js.LICENSE.txt"
+    "static/css/2.0ac28dbd.chunk.css.map": "/Surface_CRN_IDE/static/css/2.0ac28dbd.chunk.css.map",
+    "static/css/main.8150fe91.chunk.css.map": "/Surface_CRN_IDE/static/css/main.8150fe91.chunk.css.map",
+    "static/js/2.cbf516fc.chunk.js.LICENSE.txt": "/Surface_CRN_IDE/static/js/2.cbf516fc.chunk.js.LICENSE.txt",
+    "static/media/300.css": "/Surface_CRN_IDE/static/media/roboto-vietnamese-300-normal.af9afdc1.woff2",
+    "static/media/400.css": "/Surface_CRN_IDE/static/media/roboto-vietnamese-400-normal.c0bec65d.woff2",
+    "static/media/500.css": "/Surface_CRN_IDE/static/media/roboto-vietnamese-500-normal.b8e494da.woff2",
+    "static/media/700.css": "/Surface_CRN_IDE/static/media/roboto-vietnamese-700-normal.3096f18a.woff2"
   },
   "entrypoints": [
     "static/js/runtime-main.aac5a0d9.js",
-    "static/css/2.27175f2b.chunk.css",
-    "static/js/2.7f723336.chunk.js",
-    "static/css/main.aef73dd5.chunk.css",
-    "static/js/main.ed4e795b.chunk.js"
+    "static/css/2.0ac28dbd.chunk.css",
+    "static/js/2.cbf516fc.chunk.js",
+    "static/css/main.8150fe91.chunk.css",
+    "static/js/main.ec7b4442.chunk.js"
   ]
 }
